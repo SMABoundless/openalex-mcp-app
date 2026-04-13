@@ -1,9 +1,11 @@
 import { execSync } from "node:child_process";
-import { readdirSync, renameSync, rmSync, existsSync } from "node:fs";
+import { readdirSync, renameSync, rmSync, existsSync, mkdirSync } from "node:fs";
 import { join, basename } from "node:path";
 
 const UI_DIR = "ui";
 const OUT_DIR = "dist/ui";
+
+mkdirSync(OUT_DIR, { recursive: true });
 
 const htmlFiles = readdirSync(UI_DIR).filter((f) => f.endsWith(".html"));
 
