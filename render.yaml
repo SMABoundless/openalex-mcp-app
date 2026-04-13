@@ -4,10 +4,12 @@ services:
     runtime: node
     plan: free
     nodeVersion: "20.18.0"
-    buildCommand: npm ci --include=dev && npm run build && ls -la dist/server/index.js
+    buildCommand: npm install && npm run build
     startCommand: node dist/server/index.js
     envVars:
       - key: PORT
         value: "3000"
+      - key: TRANSPORT
+        value: http
       - key: OPENALEX_EMAIL
         sync: false
