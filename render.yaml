@@ -1,8 +1,11 @@
 services:
   - type: web
     name: openalex-mcp-app
-    runtime: docker
+    runtime: node
     plan: free
+    nodeVersion: "20.18.0"
+    buildCommand: npm ci --include=dev && npm run build && ls -la dist/server/index.js
+    startCommand: node dist/server/index.js
     envVars:
       - key: PORT
         value: "3000"
