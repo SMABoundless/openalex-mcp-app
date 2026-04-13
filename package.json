@@ -1,0 +1,44 @@
+{
+  "name": "openalex-mcp-app",
+  "version": "1.0.0",
+  "description": "OpenAlex MCP App — interactive UIs for scholarly database tools",
+  "type": "module",
+  "main": "dist/server/index.js",
+  "scripts": {
+    "build:server": "tsc -p tsconfig.json",
+    "build:ui": "tsx scripts/build-ui.ts",
+    "build": "npm run build:server && npm run build:ui",
+    "start": "node dist/server/index.js",
+    "dev": "concurrently --raw \"tsc -p tsconfig.json --watch\" \"tsx scripts/build-ui.ts --watch\""
+  },
+  "keywords": [
+    "mcp",
+    "mcp-app",
+    "openalex",
+    "scholarly",
+    "research"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.5.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "concurrently": "^9.2.1",
+    "preact": "^10.29.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.8",
+    "vite-plugin-singlefile": "^2.3.2"
+  }
+}

@@ -1,0 +1,39 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --oa-bg: #ffffff;
+  --oa-bg-secondary: #f8f9fa;
+  --oa-text: #1a1a2e;
+  --oa-text-secondary: #6b7280;
+  --oa-accent: #2563eb;
+  --oa-accent-hover: #1d4ed8;
+  --oa-border: #e5e7eb;
+  --oa-success: #059669;
+  --oa-warning: #d97706;
+  --oa-radius: 8px;
+  --oa-font: system-ui, -apple-system, sans-serif;
+  --oa-font-mono: ui-monospace, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --oa-bg: #1a1a2e;
+    --oa-bg-secondary: #16213e;
+    --oa-text: #e5e7eb;
+    --oa-text-secondary: #9ca3af;
+    --oa-accent: #60a5fa;
+    --oa-accent-hover: #93bbfd;
+    --oa-border: #374151;
+  }
+}
+
+body {
+  font-family: var(--oa-font);
+  color: var(--oa-text);
+  background: var(--oa-bg);
+  line-height: 1.6;
+  padding: 16px;
+}
+
+a { color: var(--oa-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
