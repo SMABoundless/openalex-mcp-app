@@ -3,7 +3,7 @@ services:
     name: openalex-mcp-app
     runtime: node
     plan: free
-    nodeVersion: "20.18.0"
+    nodeVersion: "22.23.5"
     buildCommand: npm install && npm run build
     startCommand: node dist/server/index.js
     envVars:
