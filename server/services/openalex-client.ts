@@ -1,4 +1,4 @@
-import { API_BASE_URL, POLITE_EMAIL, DEFAULT_PER_PAGE, MAX_PER_PAGE } from "../constants.js";
+import { API_BASE_URL, OPENALEX_API_KEY, DEFAULT_PER_PAGE, MAX_PER_PAGE } from "../constants.js";
 import type { Work } from "../types.js";
 
 // ============================================
@@ -18,9 +18,6 @@ export interface RequestOptions {
 export async function openalexRequest<T>(options: RequestOptions): Promise<T> {
   const url = new URL(`${API_BASE_URL}/${options.endpoint}`);
   
-  // Add polite pool email for higher rate limits
-  url.searchParams.set("mailto", POLITE_EMAIL);
-  
   // Add pagination
   const perPage = Math.min(options.perPage ?? DEFAULT_PER_PAGE, MAX_PER_PAGE);
   url.searchParams.set("per-page", String(perPage));
@@ -38,6 +35,12 @@ export async function openalexRequest<T>(options: RequestOptions): Promise<T> {
     }
   }
   
+  // API key goes in the `api_key` query parameter (OpenAlex's documented method).
+  // Don't log this URL: it contains the key.
+  if (OPENALEX_API_KEY) {
+    url.searchParams.set("api_key", OPENALEX_API_KEY);
+  }
+
   const response = await fetch(url.toString(), {
     headers: {
       "Accept": "application/json",
@@ -47,7 +50,15 @@ export async function openalexRequest<T>(options: RequestOptions): Promise<T> {
   
   if (!response.ok) {
     const errorText = await response.text().catch(() => "Unknown error");
-    throw new Error(`OpenAlex API error (${response.status}): ${errorText}`);
+    let hint = "";
+    if (response.status === 429) {
+      hint = OPENALEX_API_KEY
+        ? " (Daily OpenAlex usage limit reached for this API key.)"
+        : " (OpenAlex usage limit reached. No API key is configured: set OPENALEX_API_KEY to get a much higher free limit.)";
+    } else if (response.status === 401 || response.status === 403) {
+      hint = " (OpenAlex rejected the request. Check that OPENALEX_API_KEY is correct.)";
+    }
+    throw new Error(`OpenAlex API error (${response.status}): ${errorText}${hint}`);
   }
   
   return response.json() as Promise<T>;
@@ -80,7 +91,7 @@ export function normalizeOpenAlexId(id: string): string {
   }
   
   // Short OpenAlex ID (W123456789, A123456789, etc.)
-  if (/^[WAICSPFT]\d+$/.test(id)) {
+  if (/^[WAISPFT]\d+$/.test(id)) {
     return `https://openalex.org/${id}`;
   }
   
@@ -230,18 +241,10 @@ export function formatWorkMarkdown(work: Work, includeAbstract: boolean = true):
     }
   }
   
-  // Topics/Concepts
+  // Topics
   if (work.topics && work.topics.length > 0) {
     const topTopics = work.topics.slice(0, 3).map(t => t.display_name);
     lines.push(`**Topics:** ${topTopics.join(", ")}`);
-  } else if (work.concepts && work.concepts.length > 0) {
-    const topConcepts = work.concepts
-      .filter(c => c.score > 0.5)
-      .slice(0, 3)
-      .map(c => c.display_name);
-    if (topConcepts.length > 0) {
-      lines.push(`**Concepts:** ${topConcepts.join(", ")}`);
-    }
   }
   
   return lines.join("\n");

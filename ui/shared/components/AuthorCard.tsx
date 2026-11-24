@@ -10,14 +10,14 @@ interface AuthorCardProps {
 export function AuthorCard({ author, onClickName }: AuthorCardProps) {
   const name = author.display_name || author.name || "Unknown";
   const institution =
-    author.last_known_institution?.display_name ||
+    author.last_known_institutions?.[0]?.display_name ||
     author.affiliations?.[0]?.institution?.display_name ||
     author.affiliations?.[0] ||
     "";
   const hIndex = author.summary_stats?.h_index ?? author.hIndex ?? null;
   const works = author.works_count ?? author.paperCount ?? 0;
   const citations = author.cited_by_count ?? author.citationCount ?? 0;
-  const topics = author.topics || author.x_concepts || [];
+  const topics = author.topics || [];
   const id = author.id || author.authorId || "";
 
   const handleClick = (e: Event) => {

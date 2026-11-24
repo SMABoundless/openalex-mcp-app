@@ -9,7 +9,7 @@ export function registerWorksTools(server: McpServer): void {
   // 1. search_works
   registerAppTool(server, "openalex_search_works", {
     title: "Search OpenAlex Works",
-    description: "Search across 250M+ scholarly works in OpenAlex. Supports full-text search plus powerful filters by year, open access status, citation count, type, institution, and more.",
+    description: "Search scholarly works in OpenAlex (articles, books, datasets, preprints and more). Supports keyword search plus powerful filters by year, open access status, citation count, type, institution, and more.",
     inputSchema: WorkSearchInputSchema,
     _meta: { ui: { resourceUri: "ui://openalex/search-works.html" } },
   }, async ({ query, filter, sort, limit, page }) => {

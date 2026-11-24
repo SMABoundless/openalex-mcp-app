@@ -88,8 +88,7 @@ export interface Work {
   // Abstract
   abstract_inverted_index?: Record<string, number[]>;
   
-  // Concepts and topics
-  concepts: WorkConcept[];
+  // Topics
   topics?: WorkTopic[];
   keywords?: Keyword[];
   
@@ -157,14 +156,6 @@ export interface DehydratedSource {
   type: string;
 }
 
-export interface WorkConcept {
-  id: string;
-  wikidata?: string;
-  display_name: string;
-  level: number;
-  score: number;
-}
-
 export interface WorkTopic {
   id: string;
   display_name: string;
@@ -205,7 +196,6 @@ export interface Author {
   
   // Affiliations
   affiliations: AuthorAffiliation[];
-  last_known_institution?: DehydratedInstitution;
   last_known_institutions?: DehydratedInstitution[];
   
   // Topics
@@ -321,53 +311,7 @@ export interface InstitutionTopic {
 }
 
 // ============================================
-// Concept Types (deprecated but still available)
-// ============================================
-
-export interface Concept {
-  id: string;
-  wikidata?: string;
-  display_name: string;
-  level: number;
-  description?: string;
-  
-  // Metrics
-  works_count: number;
-  cited_by_count: number;
-  
-  // URLs
-  image_url?: string;
-  image_thumbnail_url?: string;
-  works_api_url: string;
-  
-  // Hierarchy
-  ancestors: DehydratedConcept[];
-  related_concepts: RelatedConcept[];
-  
-  // Counts over time
-  counts_by_year: CountByYear[];
-  
-  // IDs
-  ids: ExternalIds;
-  
-  // Timestamps
-  created_date: string;
-  updated_date: string;
-}
-
-export interface DehydratedConcept {
-  id: string;
-  wikidata?: string;
-  display_name: string;
-  level: number;
-}
-
-export interface RelatedConcept extends DehydratedConcept {
-  score: number;
-}
-
-// ============================================
-// Topic Types (newer replacement for concepts)
+// Topic Types
 // ============================================
 
 export interface Topic {
