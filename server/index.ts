@@ -62,6 +62,13 @@ async function runHTTP(): Promise<void> {
 
 const transport = process.env.TRANSPORT || "stdio";
 
+if (!process.env.OPENALEX_API_KEY?.trim()) {
+  console.error(
+    "Warning: OPENALEX_API_KEY is not set. OpenAlex allows only a small number of " +
+    "requests per day without a key. Get a free key at https://openalex.org/settings/api"
+  );
+}
+
 if (transport === "http") {
   runHTTP().catch(error => {
     console.error("Server error:", error);

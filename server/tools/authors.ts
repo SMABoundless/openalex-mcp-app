@@ -9,7 +9,7 @@ export function registerAuthorsTools(server: McpServer): void {
   // 1. search_authors
   registerAppTool(server, "openalex_search_authors", {
     title: "Search OpenAlex Authors",
-    description: "Search for authors across 90M+ researcher profiles in OpenAlex. Supports name search plus filters by institution, publication count, citation count, and more.",
+    description: "Search for author profiles in OpenAlex. Supports name search plus filters by institution, publication count, citation count, and more.",
     inputSchema: AuthorSearchInputSchema,
     _meta: { ui: { resourceUri: "ui://openalex/search-authors.html" } },
   }, async ({ query, filter, sort, limit, page }) => {

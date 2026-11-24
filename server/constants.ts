@@ -1,8 +1,10 @@
 // OpenAlex API configuration
 export const API_BASE_URL = "https://api.openalex.org";
 
-// Set your email for polite pool access (higher rate limits)
-export const POLITE_EMAIL = process.env.OPENALEX_EMAIL || "user@example.com";
+// OpenAlex API key (free; required since Feb 2026 for more than ~100 credits/day).
+// Get one at https://openalex.org/settings/api and set OPENALEX_API_KEY.
+// The old `mailto` "polite pool" was retired and is ignored by OpenAlex.
+export const OPENALEX_API_KEY = process.env.OPENALEX_API_KEY?.trim() || undefined;
 
 // Response limits
 export const DEFAULT_PER_PAGE = 25;
@@ -13,7 +15,6 @@ export const OPENALEX_PREFIXES = {
   work: "W",
   author: "A",
   institution: "I",
-  concept: "C",
   source: "S",
   publisher: "P",
   funder: "F",

@@ -11,5 +11,5 @@ services:
         value: "3000"
       - key: TRANSPORT
         value: http
-      - key: OPENALEX_EMAIL
+      - key: OPENALEX_API_KEY
         sync: false
