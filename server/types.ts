@@ -173,6 +173,8 @@ export interface Keyword {
 export interface CountByYear {
   year: number;
   cited_by_count: number;
+  // Present on authors and institutions, absent on works
+  works_count?: number;
 }
 
 // ============================================
