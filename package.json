@@ -5,9 +5,10 @@
   "type": "module",
   "main": "dist/server/index.js",
   "scripts": {
+    "typecheck:ui": "tsc -p tsconfig.ui.json",
     "build:server": "tsc -p tsconfig.json",
     "build:ui": "tsx scripts/build-ui.ts",
-    "build": "npm run build:server && npm run build:ui",
+    "build": "npm run typecheck:ui && npm run build:server && npm run build:ui",
     "start": "node dist/server/index.js",
     "dev": "concurrently --raw \"tsc -p tsconfig.json --watch\" \"tsx scripts/build-ui.ts --watch\""
   },

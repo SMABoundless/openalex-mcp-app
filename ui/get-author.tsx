@@ -1,110 +1,80 @@
-import { h, render } from "preact";
+import { render } from "preact";
+import type { AuthorOutput } from "../server/output-types";
 import { AppShell } from "./shared/components/AppShell";
 import { MetricBadge } from "./shared/components/MetricBadge";
 import { BarChart } from "./shared/components/BarChart";
-import { formatNumber } from "./shared/utils/format";
 import "./shared/styles/base.css";
 import "./shared/styles/components.css";
 
-function GetAuthorView() {
-  return (
-    <AppShell title="Author Profile">
-      {(data: any) => <AuthorProfile data={data} />}
-    </AppShell>
-  );
-}
-
-function AuthorProfile({ data }: { data: any }) {
-  const {
-    display_name, orcid, works_count, cited_by_count, h_index, i10_index,
-    two_year_mean_citedness, last_known_institutions, affiliations,
-    top_topics, counts_by_year, display_name_alternatives
-  } = data;
-
-  // Topic chart data (horizontal bar by count)
-  const topicChartData = (top_topics ?? [])
-    .slice(0, 10)
-    .map((t: any) => ({ label: t.name, value: t.count ?? 0 }));
-
-  // Publications per year chart
-  const yearChartData = (counts_by_year ?? [])
+function AuthorProfile({ author }: { author: AuthorOutput }) {
+  const topicChartData = author.top_topics.map((t) => ({ label: t.name, value: t.count }));
+  const yearChartData = author.counts_by_year
     .slice()
-    .sort((a: any, b: any) => a.year - b.year)
-    .map((c: any) => ({ label: String(c.year), value: c.works_count ?? c.cited_by_count ?? 0 }));
+    .sort((a, b) => a.year - b.year)
+    .map((c) => ({ label: String(c.year), value: c.works_count ?? 0 }));
 
   return (
     <div class="detail-container">
-      {/* Name + ORCID */}
-      <h1 class="detail-title">{display_name}</h1>
-      {display_name_alternatives && display_name_alternatives.length > 0 && (
-        <p class="alt-names">Also known as: {display_name_alternatives.join(", ")}</p>
+      <h1 class="detail-title">{author.display_name}</h1>
+      {author.display_name_alternatives.length > 0 && (
+        <p class="alt-names">Also known as: {author.display_name_alternatives.slice(0, 5).join(", ")}</p>
       )}
-      {orcid && (
+      {author.orcid && (
         <a
-          href={orcid.startsWith("http") ? orcid : `https://orcid.org/${orcid}`}
-          target="_blank" rel="noopener" class="orcid-link"
+          href={author.orcid.startsWith("http") ? author.orcid : `https://orcid.org/${author.orcid}`}
+          target="_blank" rel="noopener noreferrer" class="external-link"
         >
-          ORCID: {orcid}
+          ORCID: {author.orcid.replace("https://orcid.org/", "")}
         </a>
       )}
 
-      {/* Metrics Row */}
       <section class="metrics-row">
-        <MetricBadge label="Works" value={formatNumber(works_count ?? 0)} />
-        <MetricBadge label="Citations" value={formatNumber(cited_by_count ?? 0)} />
-        <MetricBadge label="h-index" value={String(h_index ?? "N/A")} />
-        <MetricBadge label="i10-index" value={String(i10_index ?? "N/A")} />
-        {two_year_mean_citedness != null && (
-          <MetricBadge label="2yr Mean Citedness" value={two_year_mean_citedness.toFixed(2)} />
+        <MetricBadge label="Works" value={author.works_count} />
+        <MetricBadge label="Citations" value={author.cited_by_count} />
+        {author.h_index != null && <MetricBadge label="h-index" value={author.h_index} />}
+        {author.i10_index != null && <MetricBadge label="i10-index" value={author.i10_index} />}
+        {author.two_year_mean_citedness != null && (
+          <MetricBadge label="2yr Mean Citedness" value={author.two_year_mean_citedness.toFixed(2)} />
         )}
       </section>
 
-      {/* Current Institutions */}
-      {last_known_institutions && last_known_institutions.length > 0 && (
+      {author.last_known_institutions.length > 0 && (
         <section class="detail-section">
-          <h3>Current Institution{last_known_institutions.length > 1 ? "s" : ""}</h3>
-          <ul class="institution-list">
-            {last_known_institutions.map((inst: any, i: number) => (
-              <li key={inst.id || i}>{inst.display_name || inst.name}</li>
+          <h3>Current Institution{author.last_known_institutions.length > 1 ? "s" : ""}</h3>
+          <ul class="plain-list">
+            {author.last_known_institutions.map((inst) => (
+              <li key={inst.id}>{inst.name}</li>
             ))}
           </ul>
         </section>
       )}
 
-      {/* Affiliation Timeline */}
-      {affiliations && affiliations.length > 0 && (
+      {author.affiliations.length > 0 && (
         <section class="detail-section">
           <h3>Affiliation History</h3>
-          <ul class="affiliation-timeline">
-            {affiliations.map((aff: any, i: number) => {
-              const inst = aff.institution;
-              const years = aff.years ?? [];
-              const yearRange = years.length > 0
-                ? `${Math.min(...years)}--${Math.max(...years)}`
-                : "";
-              return (
-                <li key={i} class="affiliation-item">
-                  <span class="affiliation-name">
-                    {inst?.name || inst?.display_name || "Unknown"}
-                    {inst?.country ? ` (${inst.country})` : ""}
-                  </span>
-                  {yearRange && <span class="affiliation-years">{yearRange}</span>}
-                </li>
-              );
-            })}
+          <ul class="plain-list">
+            {author.affiliations.map((aff, i) => (
+              <li key={i} class="split-row">
+                <span>
+                  {aff.institution.name}
+                  {aff.institution.country ? ` (${aff.institution.country})` : ""}
+                </span>
+                {aff.years.length > 0 && (
+                  <span class="muted">{Math.min(...aff.years)}–{Math.max(...aff.years)}</span>
+                )}
+              </li>
+            ))}
           </ul>
         </section>
       )}
 
-      {/* Top Research Topics */}
       {topicChartData.length > 0 && (
         <section class="chart-section">
-          <h3>Top Research Topics</h3>
-          <BarChart data={topicChartData} />
+          <h3>Top Research Topics (works)</h3>
+          <BarChart data={topicChartData} horizontal />
         </section>
       )}
 
-      {/* Publications per Year */}
       {yearChartData.length > 0 && (
         <section class="chart-section">
           <h3>Publications per Year</h3>
@@ -115,4 +85,7 @@ function AuthorProfile({ data }: { data: any }) {
   );
 }
 
-render(<GetAuthorView />, document.getElementById("app")!);
+render(
+  <AppShell<AuthorOutput> toolName="openalex_get_author">{(data) => <AuthorProfile author={data} />}</AppShell>,
+  document.getElementById("app")!
+);

@@ -1,12 +1,11 @@
-import { h } from "preact";
-
 interface OABadgeProps {
   status: string;
-  url?: string;
+  url?: string | null;
 }
 
 const statusClass: Record<string, string> = {
   gold: "badge-gold",
+  diamond: "badge-gold",
   green: "badge-green",
   bronze: "badge-bronze",
   hybrid: "badge-hybrid",
