@@ -9,6 +9,7 @@ import {
   workListEntry,
   workDetailMarkdown,
   listText,
+  rerankNote,
   pageSummary,
   firstIndex,
   toolResult,
@@ -57,6 +58,7 @@ Combine multiple filters with commas, e.g., "publication_year:2023,open_access.i
 Args:
   - query (string): Search query. In semantic mode this can be a sentence or a whole paragraph (up to 2,000 characters).
   - mode (string): "keyword" (default) matches words; "semantic" matches meaning and finds papers that use different wording. Semantic mode returns at most 50 results, ignores sort, page and cursor, and accepts only these filters: publication_year, type, language, is_oa, open_access.is_oa, has_abstract, has_fulltext, is_retracted, authorships.author.id, authorships.institutions.id, primary_location.source.id, funders.id.
+  - rerank (boolean): Re-rank the best 100 keyword matches by how well each answers the query. It puts more relevant works first, and suits questions and longer queries. Doubles the search's cost ($0.002 instead of $0.001). Keyword mode in relevance order only. Default: false.
   - filter (string, optional): OpenAlex filter syntax
   - sort (string): Sort order (relevance_score:desc, cited_by_count:desc, publication_date:desc, etc.)
   - limit (number): Results per page (1-100, default: 10)
@@ -72,9 +74,12 @@ Examples:
     inputSchema: WorkSearchInputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/search-works.html" } },
-  }, async ({ query, mode, filter, sort, limit, page, cursor }) => {
+  }, async ({ query, mode, rerank, filter, sort, limit, page, cursor }) => {
     try {
       const semantic = mode === "semantic";
+      const relevanceOrder = sort === "relevance_score:desc";
+      // OpenAlex refuses re-ranking with any other sort, so it is only sent when it can apply
+      const askRerank = rerank && !semantic && relevanceOrder;
       const data = await openalexRequest<OpenAlexListResponse<Work>>(
         semantic
           ? {
@@ -85,26 +90,28 @@ Examples:
             }
           : {
               endpoint: "works",
-              params: { search: query, filter, sort },
+              params: { search: query, filter, sort, rerank: askRerank ? true : undefined },
               perPage: limit,
               page,
               cursor,
               select: WORK_LIST_FIELDS,
             }
       );
+      const reranked = askRerank && data.meta.reranked === true;
+      const note = rerankNote({ requested: rerank, applied: reranked, semantic, relevanceOrder });
       const works = data.results.map(w => formatWorkJson(w, { compact: true }));
       // Semantic search returns one ranked batch with nothing further to page through
       const pagination = semantic
         ? { total: data.meta.count, count: works.length, page: 1, perPage: data.meta.per_page, hasMore: false }
         : extractPagination(data.meta, works.length, Boolean(cursor));
       const oql = queryOql(data.meta);
-      const output: SearchWorksOutput = { pagination, works, oql };
+      const output: SearchWorksOutput = { pagination, works, oql, reranked };
       const shownQuery = query.length > 120 ? `${query.slice(0, 120)}…` : query;
       const text = listText({
         heading: semantic ? `Works closest in meaning to "${shownQuery}"` : `Works matching "${shownQuery}"`,
         summary: semantic
-          ? `Semantic search; ${works.length} of the ${pagination.total} closest works shown, most similar first.`
-          : pageSummary(pagination, "works"),
+          ? `Semantic search; ${works.length} of the ${pagination.total} closest works shown, most similar first.${note ? ` ${note}` : ""}`
+          : `${pageSummary(pagination, "works")}${note ? ` ${note}` : ""}`,
         entries: entries(works, semantic ? 0 : firstIndex(page, limit, cursor)),
         pagination,
         emptyMessage: `No works found matching "${shownQuery}"${filter ? ` with filter "${filter}"` : ""}.`,

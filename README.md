@@ -41,6 +41,8 @@ All tools are read-only.
 
 List tools return 10 results by default (up to 100 with `limit`). Use `page` for the first 10,000 results, or `cursor` to go further on the tools that list works. Semantic search returns at most 50 results and accepts only some filters; the tool description lists them.
 
+`openalex_search_works` can re-rank its results: with `rerank: true`, OpenAlex reorders the best 100 keyword matches by how well each answers the query. It is off by default because it doubles the cost of a search ($0.002 instead of $0.001).
+
 Tools that search or count works end with the query written in OQL, OpenAlex's query language. Paste it into the OQL tab at openalex.org to rerun the search or export the full results.
 
 `openalex_group_works` takes short names for what to count by, such as `year`, `author`, `publisher`, `keyword` or `top_10_percent`, as well as raw OpenAlex field names; the tool description lists them.

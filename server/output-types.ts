@@ -61,6 +61,8 @@ export interface SearchWorksOutput {
   pagination: PaginationInfo;
   works: WorkOutput[];
   oql: string | null;
+  // True when OpenAlex re-ranked these results by how well each answers the query
+  reranked: boolean;
 }
 
 export interface CitationsOutput {

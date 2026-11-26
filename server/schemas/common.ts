@@ -113,9 +113,17 @@ export const SearchModeSchema = z.enum(["keyword", "semantic"])
     "returns at most 50 results, cannot be sorted or paged, and accepts only some filters."
   );
 
+export const RerankSchema = z.boolean()
+  .default(false)
+  .describe(
+    "Re-rank the best 100 keyword matches by how well each one answers the query, which puts more relevant works first. " +
+    "Doubles the cost of the search ($0.002 instead of $0.001). Only applies to keyword mode in relevance order."
+  );
+
 export const WorkSearchInputSchema = {
   query: SearchQuerySchema,
   mode: SearchModeSchema,
+  rerank: RerankSchema,
   filter: FilterSchema,
   sort: WorkSortSchema,
   limit: PaginationSchema.shape.limit,
