@@ -15,7 +15,6 @@ function TopicProfile({ topic }: { topic: TopicDetailOutput }) {
     <div class="detail-container">
       <h1 class="detail-title">{topic.display_name}</h1>
       <div class="detail-subtitle-row">
-        <span class="type-badge">topic</span>
         {path && <span>{path}</span>}
         <span class="muted">{shortId(topic.id)}</span>
       </div>

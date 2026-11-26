@@ -140,6 +140,13 @@ Besides OpenAlex (`api.openalex.org`, and `content.openalex.org` for stored text
 - `prod--epp.elifesciences.org`, for the text of eLife reviews
 - `doi.org` and `eeb.embo.org`, for the text of Review Commons reviews
 
+## Visual style
+
+The views are styled after [openalex.org](https://openalex.org): its colours, type sizes, radii and shadows (the site's own `--ox-*` design tokens), its three fonts, and its category colours for works, authors, sources, institutions and topics. A dark variant is added for hosts in dark mode; the OpenAlex site itself is light only.
+
+- **Fonts:** Inter, JetBrains Mono and Dosis, each under the SIL Open Font License. Small subsets are bundled into every view, because views run in a sandboxed frame that cannot load fonts from the network. The licences are in `ui/shared/fonts/`.
+- **Logo:** the OpenAlex mark and wordmark appear at the top of each view, linked to openalex.org, beside the words "Unofficial app · data from OpenAlex". The mark belongs to OpenAlex (OurResearch). This project is not affiliated with or endorsed by them. If you publish or distribute a copy, check with OpenAlex that they are happy with this use of their logo, or remove it in `ui/shared/components/BrandBar.tsx`.
+
 ## How results are returned
 
 Each tool result has two parts:
@@ -161,7 +168,7 @@ Layout:
 
 - `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts`, `services/format-analysis.ts` and `services/format-query.ts` shape results, `services/references.ts` matches citations to works, `services/keywords.ts` builds keyword searches, and `services/review-text.ts` fetches review text.
 - `server/output-types.ts` — the shape of each tool's structured data. The server and the views both import it, so a renamed field fails the build.
-- `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`.
+- `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`. `ui/shared/styles/base.css` holds the design tokens.
 - `test/` — tests for ID handling, pagination, formatting, the set summary, citation matching, keyword searches, review text and query results. They do not call the API.
 
 ## License

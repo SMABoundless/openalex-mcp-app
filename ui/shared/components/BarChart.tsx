@@ -47,7 +47,7 @@ export function BarChart({ data, horizontal, height = 180 }: BarChartProps) {
           const y = topPad + chartHeight - barH;
           return (
             <g key={d.label}>
-              <rect x={x} y={y} width={barWidth} height={barH} rx={3} fill="var(--oa-accent)" opacity={0.85} />
+              <rect x={x} y={y} width={barWidth} height={barH} rx={3} fill="var(--oa-cat-mid)" />
               <text x={x + barWidth / 2} y={y - 4} text-anchor="middle" font-size="10" fill="var(--oa-text-secondary)">
                 {d.value > 0 ? compact(d.value) : ""}
               </text>

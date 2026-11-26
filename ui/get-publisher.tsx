@@ -22,7 +22,6 @@ function PublisherProfile({ publisher }: { publisher: PublisherDetailOutput }) {
     <div class="detail-container">
       <h1 class="detail-title">{publisher.display_name}</h1>
       <div class="detail-subtitle-row">
-        <span class="type-badge">publisher</span>
         {publisher.parent && <span>Part of {publisher.parent.name}</span>}
         {publisher.country_codes.length > 0 && <span class="muted">{publisher.country_codes.join(", ")}</span>}
         <span class="muted">{shortId(publisher.id)}</span>
