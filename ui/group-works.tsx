@@ -32,7 +32,7 @@ function GroupedCounts({ data }: { data: GroupWorksOutput }) {
   return (
     <div class="results-container">
       <header class="results-header">
-        <h2>Works by {data.group_by}</h2>
+        <h2>Works by {data.label}</h2>
         <p class="results-subtitle">
           {formatNumber(data.total_works)} works{scope && <> · {scope}</>}
         </p>
@@ -43,7 +43,7 @@ function GroupedCounts({ data }: { data: GroupWorksOutput }) {
       <table class="results-table">
         <thead>
           <tr>
-            <th>{data.group_by}</th>
+            <th>{data.label}</th>
             <th class="num">Works</th>
             <th class="num">Share</th>
           </tr>
@@ -58,6 +58,13 @@ function GroupedCounts({ data }: { data: GroupWorksOutput }) {
           ))}
         </tbody>
       </table>
+
+      {data.works_without_value != null && data.works_without_value > 0 && (
+        <p class="muted table-note">
+          {formatNumber(data.works_without_value)} of the {formatNumber(data.total_works)} works have no value for this
+          field, so they are in neither group.
+        </p>
+      )}
 
       {data.more_groups && <p class="muted table-note">Only the {data.groups.length} largest groups are shown.</p>}
     </div>

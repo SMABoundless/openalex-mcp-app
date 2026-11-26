@@ -155,6 +155,18 @@ export const SourceIdSchema = z.string()
   .min(1)
   .describe("Source identifier. Accepts: OpenAlex ID (S1983995261), ISSN (2167-8359), or full URL (https://openalex.org/S...)");
 
+export const TopicIdSchema = z.string()
+  .min(1)
+  .describe("Topic identifier. Accepts: OpenAlex ID (T10102) or full URL (https://openalex.org/T10102)");
+
+export const FunderIdSchema = z.string()
+  .min(1)
+  .describe("Funder identifier. Accepts: OpenAlex ID (F4320306076), ROR (https://ror.org/021nxhr62), or full URL (https://openalex.org/F...)");
+
+export const PublisherIdSchema = z.string()
+  .min(1)
+  .describe("Publisher identifier. Accepts: OpenAlex ID (P4310320990), ROR (https://ror.org/02scfj030), or full URL (https://openalex.org/P...)");
+
 const entitySearchSchema = (what: string) => ({
   query: z.string().min(1).max(500).describe(`Name or search terms for the ${what}`),
   filter: FilterSchema,
@@ -166,6 +178,7 @@ const entitySearchSchema = (what: string) => ({
 export const SourceSearchInputSchema = entitySearchSchema("source");
 export const TopicSearchInputSchema = entitySearchSchema("topic");
 export const FunderSearchInputSchema = entitySearchSchema("funder");
+export const PublisherSearchInputSchema = entitySearchSchema("publisher");
 
 // ============================================
 // Grouping
@@ -175,7 +188,11 @@ export const GroupWorksInputSchema = {
   group_by: z.string()
     .min(1)
     .max(100)
-    .describe("The works field to count by, e.g. publication_year, type, open_access.oa_status, primary_topic.field.id"),
+    .describe(
+      "What to count by. A short name (year, type, oa_status, author, institution, country, journal, publisher, " +
+      "funder, topic, subfield, field, domain, keyword, language, sdg, license, top_10_percent, top_1_percent) " +
+      "or any OpenAlex works field that supports grouping, e.g. primary_topic.field.id"
+    ),
   query: z.string().min(1).max(500).optional().describe("Optional keyword search to restrict which works are counted"),
   filter: FilterSchema,
   limit: z.number()

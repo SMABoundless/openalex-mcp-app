@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { WorkSearchInputSchema, WorkIdSchema, PaginationSchema, CursorSchema } from "../schemas/common.js";
-import { WORK_LIST_FIELDS, SEMANTIC_MAX_RESULTS } from "../constants.js";
+import { WORK_LIST_FIELDS, SEMANTIC_MAX_RESULTS, MAX_PER_PAGE } from "../constants.js";
 import { openalexRequest, getEntity, extractPagination, makePagination } from "../services/openalex-client.js";
 import {
   formatWorkJson,
@@ -16,10 +16,26 @@ import {
   READ_ONLY_ANNOTATIONS
 } from "../services/format-utils.js";
 import type { Work, OpenAlexListResponse } from "../types.js";
-import type { SearchWorksOutput, CitationsOutput, ReferencesOutput, WorkOutput } from "../output-types.js";
+import type { SearchWorksOutput, CitationsOutput, ReferencesOutput, RelatedWorksOutput, WorkOutput } from "../output-types.js";
 
 const entries = (works: WorkOutput[], pageStart: number): string[] =>
   works.map((w, i) => workListEntry(w, pageStart + i + 1));
+
+/** Fetches the works with these OpenAlex IDs and returns them in the order the IDs were given. */
+async function fetchWorksInOrder(ids: string[]): Promise<WorkOutput[]> {
+  if (ids.length === 0) return [];
+  const data = await openalexRequest<OpenAlexListResponse<Work>>({
+    endpoint: "works",
+    params: { filter: `openalex_id:${ids.join("|")}` },
+    perPage: ids.length,
+    select: WORK_LIST_FIELDS,
+  });
+  const order = new Map(ids.map((workId, i) => [workId, i]));
+  return data.results
+    .slice()
+    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+    .map(w => formatWorkJson(w, { compact: true }));
+}
 
 export function registerWorksTools(server: McpServer): void {
   // 1. search_works
@@ -218,22 +234,8 @@ Returns: List of works cited in the specified work's references.`,
     try {
       const work = await getEntity<Work>("works", id, "id,display_name,referenced_works");
       const allRefs = work.referenced_works ?? [];
-      const refIds = allRefs.slice((page - 1) * limit, page * limit);
-      let references: WorkOutput[] = [];
-      if (refIds.length > 0) {
-        const data = await openalexRequest<OpenAlexListResponse<Work>>({
-          endpoint: "works",
-          params: { filter: `openalex_id:${refIds.join("|")}` },
-          perPage: limit,
-          select: WORK_LIST_FIELDS,
-        });
-        // The API returns these in its own order; restore the order of the reference list
-        const order = new Map(refIds.map((refId, i) => [refId, i]));
-        references = data.results
-          .slice()
-          .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
-          .map(w => formatWorkJson(w, { compact: true }));
-      }
+      // The API returns works in its own order; fetchWorksInOrder restores the order of the reference list
+      const references = await fetchWorksInOrder(allRefs.slice((page - 1) * limit, page * limit));
       const title = work.display_name || "Untitled";
       const pagination = makePagination(allRefs.length, page, limit, references.length);
       const output: ReferencesOutput = {
@@ -253,6 +255,59 @@ Returns: List of works cited in the specified work's references.`,
       return toolResult(text, output);
     } catch (error) {
       return toolError("fetching references", error);
+    }
+  });
+
+  // 5. get_related_works
+  registerAppTool(server, "openalex_get_related_works", {
+    title: "Get Works Related to a Work",
+    description: `Find works that OpenAlex judges to be on a similar subject to a given work, whether or not they cite each other.
+
+Use this to:
+- Widen a search from one known paper to others like it
+- Find similar work that citation tracking misses
+
+OpenAlex lists only a handful of related works for each work (usually 10 to 20), most similar first. For a wider net, use openalex_search_works with mode "semantic".
+
+Args:
+  - id (string): Work identifier (OpenAlex ID, DOI, or PMID)
+  - limit (number): Results per page (1-100, default: 10)
+  - page (number): Page number (default: 1)
+
+Returns: List of works related to the specified work.`,
+    inputSchema: {
+      id: WorkIdSchema,
+      limit: PaginationSchema.shape.limit,
+      page: PaginationSchema.shape.page,
+    },
+    annotations: READ_ONLY_ANNOTATIONS,
+    _meta: { ui: { resourceUri: "ui://openalex/get-related-works.html" } },
+  }, async ({ id, limit, page }) => {
+    try {
+      const work = await getEntity<Work>("works", id, "id,display_name,related_works");
+      // Some listed IDs no longer resolve (merged or removed works). The list is
+      // short, so fetch it whole, keep what exists, and page through that.
+      const allRelated = await fetchWorksInOrder((work.related_works ?? []).slice(0, MAX_PER_PAGE));
+      const related = allRelated.slice((page - 1) * limit, page * limit);
+      const title = work.display_name || "Untitled";
+      const pagination = makePagination(allRelated.length, page, limit, related.length);
+      const output: RelatedWorksOutput = {
+        source_work: { id: work.id, title, total_related: allRelated.length },
+        pagination,
+        related_works: related,
+      };
+      const text = listText({
+        heading: `Works related to "${title}"`,
+        summary: pageSummary(pagination, "related works"),
+        entries: entries(related, (page - 1) * limit),
+        pagination,
+        emptyMessage: allRelated.length === 0
+          ? `OpenAlex lists no related works for "${title}".`
+          : `No related works on page ${page}. Total related works: ${allRelated.length}.`,
+      });
+      return toolResult(text, output);
+    } catch (error) {
+      return toolError("fetching related works", error);
     }
   });
 }
