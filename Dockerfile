@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --include=dev
 
-COPY tsconfig.json vite.config.ts ./
+COPY tsconfig.json tsconfig.ui.json vite.config.ts ./
 COPY scripts/ ./scripts/
 COPY server/ ./server/
 COPY ui/ ./ui/

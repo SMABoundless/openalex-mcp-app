@@ -20,7 +20,7 @@ export function WorkList({ works, pagination, ctx, emptyMessage, numbered }: Wor
       </div>
     );
   }
-  const start = (pagination.page - 1) * pagination.perPage + 1;
+  const start = pagination.cursorMode ? 1 : (pagination.page - 1) * pagination.perPage + 1;
   return (
     <>
       {numbered ? (
@@ -38,7 +38,7 @@ export function WorkList({ works, pagination, ctx, emptyMessage, numbered }: Wor
           ))}
         </div>
       )}
-      <Pagination pagination={pagination} onPageChange={ctx.goToPage} busy={ctx.busy} />
+      <Pagination pagination={pagination} onNavigate={ctx.navigate} busy={ctx.busy} />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
-import { InstitutionSearchInputSchema, InstitutionIdSchema, PaginationSchema, WorkSortSchema, FilterSchema } from "../schemas/common.js";
+import { InstitutionSearchInputSchema, InstitutionIdSchema, PaginationSchema, WorkSortSchema, FilterSchema, CursorSchema } from "../schemas/common.js";
+import { INSTITUTION_LIST_FIELDS, WORK_LIST_FIELDS } from "../constants.js";
 import { openalexRequest, getEntity, extractPagination } from "../services/openalex-client.js";
 import {
   formatWorkJson,
@@ -10,6 +11,7 @@ import {
   institutionDetailMarkdown,
   listText,
   pageSummary,
+  firstIndex,
   toolResult,
   toolError,
   READ_ONLY_ANNOTATIONS
@@ -33,7 +35,7 @@ Args:
   - query (string): Institution name or search terms
   - filter (string, optional): OpenAlex filter syntax
   - sort (string): Sort order (relevance_score:desc, cited_by_count:desc, works_count:desc)
-  - limit (number): Results per page (1-100, default: 25)
+  - limit (number): Results per page (1-100, default: 10)
   - page (number): Page number (default: 1)
 
 Returns: Institution profiles with names, locations, types, publication counts, citations, and OpenAlex ID.
@@ -52,6 +54,7 @@ Examples:
         params: { search: query, filter, sort },
         perPage: limit,
         page,
+        select: INSTITUTION_LIST_FIELDS,
       });
       const pagination = extractPagination(data.meta, data.results.length);
       const institutions = data.results.map(i => formatInstitutionJson(i, { compact: true }));
@@ -110,8 +113,9 @@ Args:
   - id (string): Institution identifier (OpenAlex ID or ROR)
   - filter (string, optional): Additional OpenAlex filter (e.g., "publication_year:2023", "type:article")
   - sort (string): Sort order (cited_by_count:desc for most-cited, publication_date:desc for recent)
-  - limit (number): Results per page (1-100, default: 25)
-  - page (number): Page number (default: 1)
+  - limit (number): Results per page (1-100, default: 10)
+  - page (number): Page number (default: 1). Paging reaches the first 10,000 results.
+  - cursor (string, optional): For going past 10,000 results. Pass "*" to start, then the cursor from the previous response.
 
 Returns: List of works from the institution.`,
     inputSchema: {
@@ -120,12 +124,13 @@ Returns: List of works from the institution.`,
       sort: WorkSortSchema,
       limit: PaginationSchema.shape.limit,
       page: PaginationSchema.shape.page,
+      cursor: CursorSchema,
     },
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/get-institution-works.html" } },
-  }, async ({ id, filter, sort, limit, page }) => {
+  }, async ({ id, filter, sort, limit, page, cursor }) => {
     try {
-      const institution = await getEntity<Institution>("institutions", id);
+      const institution = await getEntity<Institution>("institutions", id, "id,display_name,works_count");
       const instFilter = `authorships.institutions.id:${institution.id}`;
       const data = await openalexRequest<OpenAlexListResponse<Work>>({
         endpoint: "works",
@@ -133,15 +138,17 @@ Returns: List of works from the institution.`,
         params: { filter: filter ? `${instFilter},${filter}` : instFilter, sort: sort === "relevance_score:desc" ? "cited_by_count:desc" : sort },
         perPage: limit,
         page,
+        cursor,
+        select: WORK_LIST_FIELDS,
       });
-      const pagination = extractPagination(data.meta, data.results.length);
+      const pagination = extractPagination(data.meta, data.results.length, Boolean(cursor));
       const works = data.results.map(w => formatWorkJson(w, { compact: true }));
       const output: InstitutionWorksOutput = {
         institution: { id: institution.id, name: institution.display_name, total_works: institution.works_count ?? 0 },
         pagination,
         works,
       };
-      const start = (page - 1) * limit;
+      const start = firstIndex(page, limit, cursor);
       const text = listText({
         heading: `Works from ${institution.display_name}`,
         summary: pageSummary(pagination, "works"),

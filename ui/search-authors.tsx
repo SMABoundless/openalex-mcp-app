@@ -23,7 +23,7 @@ function SearchAuthorsView() {
                 <AuthorCard key={author.id} author={author} />
               ))}
             </div>
-            <Pagination pagination={data.pagination} onPageChange={ctx.goToPage} busy={ctx.busy} />
+            <Pagination pagination={data.pagination} onNavigate={ctx.navigate} busy={ctx.busy} />
           </div>
         )
       }
