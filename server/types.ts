@@ -106,6 +106,8 @@ export interface Work {
   topics?: WorkTopic[];
   keywords?: Keyword[];
   
+  is_retracted?: boolean;
+
   // Related works
   related_works: string[];
   referenced_works: string[];

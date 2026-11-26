@@ -73,6 +73,19 @@ export const INSTITUTION_LIST_FIELDS = [
   "works_count", "cited_by_count", "summary_stats"
 ].join(",");
 
+// openalex_analyze_works charts this many recent years
+export const ANALYZE_YEARS = 25;
+
+// openalex_resolve_references accepts this many references in one call
+export const MAX_REFERENCES = 25;
+
+// Requests in flight at once when a tool makes several. Higher values trip
+// OpenAlex's per-second limit.
+export const REQUEST_CONCURRENCY = 3;
+
+// OpenAlex allows about one semantic search per second
+export const SEMANTIC_INTERVAL_MS = 1100;
+
 // OpenAlex entity prefixes for ID resolution
 export const OPENALEX_PREFIXES = {
   work: "W",

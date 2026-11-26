@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_PER_PAGE, DEFAULT_PER_PAGE } from "../constants.js";
+import { MAX_PER_PAGE, DEFAULT_PER_PAGE, MAX_REFERENCES } from "../constants.js";
 
 // ============================================
 // Common Parameter Schemas
@@ -179,6 +179,31 @@ export const SourceSearchInputSchema = entitySearchSchema("source");
 export const TopicSearchInputSchema = entitySearchSchema("topic");
 export const FunderSearchInputSchema = entitySearchSchema("funder");
 export const PublisherSearchInputSchema = entitySearchSchema("publisher");
+
+// ============================================
+// Set summary and reference checking
+// ============================================
+
+export const AnalyzeWorksInputSchema = {
+  query: z.string().min(1).max(500).optional().describe("Keyword search choosing which works to summarise"),
+  filter: FilterSchema,
+  top: z.number()
+    .int()
+    .min(3)
+    .max(10)
+    .default(5)
+    .describe("How many entries to list in each ranking (3-10, default: 5)"),
+};
+
+export const ResolveReferencesInputSchema = {
+  references: z.array(z.string().min(1).max(1500))
+    .min(1)
+    .max(MAX_REFERENCES)
+    .describe(
+      `The references to check, one per item (1-${MAX_REFERENCES}). Each can be a DOI, a PMID, an OpenAlex ID, ` +
+      "or a citation in any style. A citation that contains a DOI is looked up by that DOI."
+    ),
+};
 
 // ============================================
 // Grouping

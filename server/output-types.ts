@@ -316,3 +316,67 @@ export interface GroupWorksOutput {
   // For yes/no fields only: works that have no value, so are in neither group
   works_without_value?: number;
 }
+
+// ---------- Summary of a set of works ----------
+
+export interface AnalyzeWorksOutput {
+  query: string | null;
+  filter: string | null;
+  total_works: number;
+  // Share of the works that are open access in any form, 0-1
+  open_access_share: number | null;
+  by_oa_status: GroupOutput[];
+  // Works per year, oldest first, for the most recent years
+  by_year: { year: number; works_count: number }[];
+  by_type: GroupOutput[];
+  top_fields: GroupOutput[];
+  top_topics: GroupOutput[];
+  top_authors: GroupOutput[];
+  top_institutions: GroupOutput[];
+  top_countries: GroupOutput[];
+  top_sources: GroupOutput[];
+  top_funders: GroupOutput[];
+  // Among works whose authors' countries are known: the share with authors in
+  // two or more countries. null when no work has a known country.
+  international_share: number | null;
+  works_with_known_countries: number;
+  // Among works that have a citation percentile: the share in the top 10% of
+  // their year and subfield. null when none has one.
+  top_10_percent_share: number | null;
+  most_cited: WorkOutput[];
+  // Parts that could not be fetched, by name. Empty when everything arrived.
+  unavailable: string[];
+}
+
+// ---------- Checking references ----------
+
+// matched: found by its identifier. likely / possible: found by searching for
+// the title, with strong / partial agreement. not_found: nothing close enough.
+export type ReferenceStatus = "matched" | "likely" | "possible" | "not_found" | "error";
+
+export interface ResolvedReference {
+  // Position in the list that was submitted, starting at 1
+  index: number;
+  input: string;
+  status: ReferenceStatus;
+  // How the work was found; null when it was not
+  method: "doi" | "pmid" | "openalex_id" | "title_search" | "semantic_search" | null;
+  work: WorkOutput | null;
+  is_retracted: boolean;
+  // Share of the work's title words that appear in the reference, 0-1
+  title_similarity: number | null;
+  notes: string[];
+}
+
+export interface ResolveReferencesOutput {
+  results: ResolvedReference[];
+  summary: {
+    total: number;
+    matched: number;
+    likely: number;
+    possible: number;
+    not_found: number;
+    errors: number;
+    retracted: number;
+  };
+}

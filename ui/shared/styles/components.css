@@ -295,3 +295,13 @@
 .card-footnote { margin: 8px 0 0; font-size: 0.78rem; }
 .results-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .table-note { margin-top: 8px; }
+
+/* Set summary: rankings side by side where there is room */
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 24px; }
+
+/* Reference checking */
+.status-good { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.status-warn { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.status-bad { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.reference-input { margin-top: 8px; overflow-wrap: anywhere; }
+.reference-work { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--oa-border); }

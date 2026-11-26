@@ -2,7 +2,7 @@
 
 An MCP server for [OpenAlex](https://openalex.org), the open catalog of scholarly works, authors, institutions, journals, publishers and funders, with interactive views for hosts that support [MCP Apps](https://modelcontextprotocol.io).
 
-Ask your assistant to search the literature, look up a paper, follow its citations, find related work, profile an author, institution, journal, publisher, funder or subject, or count works by year, author, publisher, open access status and more. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
+Ask your assistant to search the literature, look up a paper, follow its citations, find related work, profile an author, institution, journal, publisher, funder or subject, count works by year, author, publisher, open access status and more, get a one-call overview of a set of works, or check a reference list for works that don't exist or have been retracted. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
 
 > OpenAlex also publishes its own official connector for Claude (`https://mcp.openalex.org/mcp`, listed as **OpenAlex** in Claude's connector directory). It covers more of the API than this project. This project's difference is the visual views and that you host it yourself.
 
@@ -30,6 +30,8 @@ Ask your assistant to search the literature, look up a paper, follow its citatio
 | `openalex_search_funders` | Search research funders, to get an ID for filtering works by funder |
 | `openalex_get_funder` | One funder by OpenAlex ID or ROR: metrics, awards, funded works per year |
 | `openalex_group_works` | Count works by year, type, open access status, author, institution, country, journal, publisher, funder, subject, keyword, language and more |
+| `openalex_analyze_works` | One-call overview of a set of works: output per year, open access share, leading fields, authors, institutions, countries, journals and funders, international co-authorship, most cited works |
+| `openalex_resolve_references` | Check up to 25 references (DOIs, PMIDs or citations in any style) against OpenAlex and flag retracted ones |
 
 All tools are read-only.
 
@@ -43,6 +45,11 @@ List tools return 10 results by default (up to 100 with `limit`). Use `page` for
 - An OpenAlex API key. It is free: create one at <https://openalex.org/settings/api>.
 
 The server runs without a key, but OpenAlex then gives it a small daily budget shared with everyone on the same IP address. On a shared host that budget is usually already spent. With a key you get your own, larger daily budget. Looking up a single record by ID is free; searches and lists are metered. The topic and publisher profiles each add one small metered request (for yearly output and for the list of journals); if it fails, the profile is returned without that part.
+
+Two tools make several requests per call:
+
+- `openalex_analyze_works` makes 13: about $0.0013 with a filter alone, about $0.013 with a keyword query.
+- `openalex_resolve_references` is free for references that carry a DOI, PMID or OpenAlex ID. A citation without one is matched by its title and costs $0.001 to $0.003.
 
 ## Install
 
@@ -128,15 +135,15 @@ When the daily budget is nearly used up, the text ends with a note saying how mu
 ```bash
 npm run dev          # rebuild server and views on change
 npm run build        # type-check the views, then build server and views
-npm test             # run the formatter tests
+npm test             # run the tests
 ```
 
 Layout:
 
-- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts` and `services/format-entities.ts` shape results.
+- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts` and `services/format-analysis.ts` shape results, and `services/references.ts` matches citations to works.
 - `server/output-types.ts` — the shape of each tool's structured data. The server and the views both import it, so a renamed field fails the build.
 - `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`.
-- `test/` — tests for ID handling, pagination and formatting. They do not call the API.
+- `test/` — tests for ID handling, pagination, formatting, the set summary and citation matching. They do not call the API.
 
 ## License
 
