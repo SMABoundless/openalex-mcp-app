@@ -78,13 +78,32 @@ TRANSPORT=http PORT=3000 OPENALEX_API_KEY=your-key npm start
 
 The MCP endpoint is `POST /mcp`, and `GET /health` reports status. `render.yaml` and the `Dockerfile` deploy it to [Render](https://render.com); set `OPENALEX_API_KEY` in the service's environment settings, not in `render.yaml`.
 
-The HTTP endpoint has no authentication. Anyone who knows the URL can run searches against your OpenAlex budget, so keep the URL private or put the service behind your own access control.
+### Protecting a remote server
+
+Without a secret, anyone who knows the URL can run searches against your OpenAlex budget. Set `MCP_AUTH_TOKEN` to a long random value to require it on every request to `/mcp`:
+
+```bash
+openssl rand -hex 32    # generates a suitable secret
+```
+
+Clients then present the secret in one of two ways:
+
+- **Header**, for clients that can send one: `Authorization: Bearer <secret>`. In Claude Code:
+
+  ```bash
+  claude mcp add --transport http openalex https://your-server.example/mcp --header "Authorization: Bearer <secret>"
+  ```
+
+- **URL**, for clients that only accept an address and cannot send a header: `https://your-server.example/mcp?key=<secret>`. Treat that whole address as the secret: anyone you share it with can use the server.
+
+Requests without the right secret get a 401. `/health` stays open so the host can check the service is up. On Render, set `MCP_AUTH_TOKEN` in the service's environment settings.
 
 ## Configuration
 
 | Variable | Purpose | Default |
 |---|---|---|
 | `OPENALEX_API_KEY` | Your OpenAlex API key | none (shared budget) |
+| `MCP_AUTH_TOKEN` | Shared secret required on `/mcp` when using the HTTP transport | none (open) |
 | `TRANSPORT` | `stdio` or `http` | `stdio` |
 | `PORT` | Port for the HTTP transport | `3000` |
 
