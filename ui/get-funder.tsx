@@ -17,7 +17,6 @@ function FunderProfile({ funder }: { funder: FunderDetailOutput }) {
     <div class="detail-container">
       <h1 class="detail-title">{funder.display_name}</h1>
       <div class="detail-subtitle-row">
-        <span class="type-badge">funder</span>
         {funder.description && <span>{funder.description}</span>}
         {funder.country_code && <span class="muted">{funder.country_code}</span>}
         <span class="muted">{shortId(funder.id)}</span>

@@ -1,39 +1,165 @@
+/*
+ * Visual style modelled on openalex.org.
+ * Colours, type sizes, radii and shadows are that site's own design tokens
+ * (its `--ox-*` variables); the fonts are the three it uses. The dark values
+ * are this project's: the OpenAlex site has a light theme only.
+ */
+
+/* Fonts are bundled so the views work inside a sandboxed frame with no network */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/Inter-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("../fonts/JetBrainsMono-ascii.woff2") format("woff2");
+  unicode-range: U+0020-007E;
+}
+/* Holds only the letters of the wordmark */
+@font-face {
+  font-family: "Dosis";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/Dosis-wordmark.woff2") format("woff2");
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --oa-bg: #ffffff;
-  --oa-bg-secondary: #f8f9fa;
-  --oa-text: #1a1a2e;
-  --oa-text-secondary: #6b7280;
-  --oa-accent: #2563eb;
-  --oa-accent-hover: #1d4ed8;
-  --oa-border: #e5e7eb;
-  --oa-success: #059669;
-  --oa-warning: #d97706;
+  /* Surfaces */
+  --oa-bg: #fff;
+  --oa-bg-secondary: #fafafa;
+  --oa-bg-muted: #f5f5f5;
+  --oa-bg-emphasis: #ebebeb;
+
+  /* Text */
+  --oa-text: #171717;
+  --oa-text-strong: #3f3f3f;
+  --oa-text-secondary: #5c5c5c;
+  --oa-text-muted: #8a8a8a;
+
+  /* Lines */
+  --oa-border-subtle: #f0f0f0;
+  --oa-border: #e2e2e2;
+  --oa-border-strong: #d4d4d4;
+
+  /* OpenAlex's accent is black; links and result titles are blue */
+  --oa-accent: #000;
+  --oa-accent-on: #fff;
+  --oa-link: #1f6feb;
+  --oa-title: #2563eb;
+
+  /* Status */
+  --oa-info-fg: #1f6feb;
+  --oa-info-bg: #eaf2ff;
+  --oa-info-border: #c5dcfd;
+  --oa-success-fg: #1a7f37;
+  --oa-success-bg: #e6f7ec;
+  --oa-success-border: #b9e3c6;
+  --oa-warning-fg: #9a6700;
+  --oa-warning-bg: #fff4d6;
+  --oa-warning-border: #f5d27c;
+  --oa-danger-fg: #cf222e;
+  --oa-danger-bg: #feeceb;
+  --oa-danger-border: #fbc6c2;
+
+  /* Chips, as in the site's search builder */
+  --oa-chip-fg: #14625c;
+  --oa-chip-bg: #d6f2ec;
+  --oa-chip2-fg: #b25d06;
+  --oa-chip2-bg: #fdf6f0;
+
+  /* The colour of the kind of record a view shows; set per view by AppShell */
+  --oa-cat-light: #ffebee;
+  --oa-cat-mid: #ef5350;
+  --oa-cat-dark: #c62828;
+
+  --oa-radius-xs: 4px;
+  --oa-radius-sm: 6px;
   --oa-radius: 8px;
-  --oa-font: system-ui, -apple-system, sans-serif;
-  --oa-font-mono: ui-monospace, monospace;
+  --oa-radius-lg: 12px;
+  --oa-shadow: 0 3px 6px -2px #00000005, 0 1px 1px 0 #0000000a;
+  --oa-shadow-hover: 0 5px 10px 1px #0000001f;
+
+  --oa-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --oa-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --oa-font-brand: "Dosis", var(--oa-font);
 }
+
+/* Record kinds, in the site's category colours */
+.cat-works { --oa-cat-light: #ffebee; --oa-cat-mid: #ef5350; --oa-cat-dark: #c62828; }
+.cat-authors { --oa-cat-light: #e3f2fd; --oa-cat-mid: #42a5f5; --oa-cat-dark: #1565c0; }
+.cat-sources { --oa-cat-light: #e8f5e9; --oa-cat-mid: #66bb6a; --oa-cat-dark: #2e7d32; }
+.cat-institutions { --oa-cat-light: #fff3e0; --oa-cat-mid: #ffa726; --oa-cat-dark: #ef6c00; }
+.cat-funders { --oa-cat-light: #f3e5f5; --oa-cat-mid: #ab47bc; --oa-cat-dark: #6a1b9a; }
+.cat-topics { --oa-cat-light: #e0f2f1; --oa-cat-mid: #26a69a; --oa-cat-dark: #00695c; }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --oa-bg: #1a1a2e;
-    --oa-bg-secondary: #16213e;
-    --oa-text: #e5e7eb;
-    --oa-text-secondary: #9ca3af;
-    --oa-accent: #60a5fa;
-    --oa-accent-hover: #93bbfd;
-    --oa-border: #374151;
+    --oa-bg: #0f0f0f;
+    --oa-bg-secondary: #171717;
+    --oa-bg-muted: #1f1f1f;
+    --oa-bg-emphasis: #2a2a2a;
+    --oa-text: #f5f5f5;
+    --oa-text-strong: #d4d4d4;
+    --oa-text-secondary: #a3a3a3;
+    --oa-text-muted: #7a7a7a;
+    --oa-border-subtle: #1f1f1f;
+    --oa-border: #2e2e2e;
+    --oa-border-strong: #3d3d3d;
+    --oa-accent: #fff;
+    --oa-accent-on: #000;
+    --oa-link: #6ea8ff;
+    --oa-title: #7fb0ff;
+    --oa-info-fg: #6ea8ff; --oa-info-bg: #10233f; --oa-info-border: #1d3d6b;
+    --oa-success-fg: #56c271; --oa-success-bg: #0f2a18; --oa-success-border: #1d4a2b;
+    --oa-warning-fg: #e3b341; --oa-warning-bg: #2e2508; --oa-warning-border: #57460f;
+    --oa-danger-fg: #ff7b72; --oa-danger-bg: #331312; --oa-danger-border: #5c2320;
+    --oa-chip-fg: #7fd6c9; --oa-chip-bg: #0f2b28;
+    --oa-chip2-fg: #f0a868; --oa-chip2-bg: #2b1d10;
+    --oa-shadow: 0 1px 1px 0 #00000066;
+    --oa-shadow-hover: 0 5px 12px 1px #00000099;
   }
+  .cat-works { --oa-cat-light: #3a1416; --oa-cat-dark: #ff8a80; }
+  .cat-authors { --oa-cat-light: #10283f; --oa-cat-dark: #90caf9; }
+  .cat-sources { --oa-cat-light: #13301a; --oa-cat-dark: #a5d6a7; }
+  .cat-institutions { --oa-cat-light: #3a2710; --oa-cat-dark: #ffcc80; }
+  .cat-funders { --oa-cat-light: #2d1533; --oa-cat-dark: #ce93d8; }
+  .cat-topics { --oa-cat-light: #0f2b28; --oa-cat-dark: #80cbc4; }
+  /* The mark is black artwork */
+  .brand-mark { filter: invert(1); }
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   font-family: var(--oa-font);
+  font-size: 0.875rem;
+  line-height: 1.5rem;
   color: var(--oa-text);
   background: var(--oa-bg);
-  line-height: 1.6;
   padding: 16px;
 }
 
-a { color: var(--oa-accent); text-decoration: none; }
+a { color: var(--oa-link); text-decoration: none; }
 a:hover { text-decoration: underline; }
+code { font-family: var(--oa-font-mono); font-size: 0.8125rem; }
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--oa-bg), 0 0 0 4px var(--oa-accent);
+  border-radius: var(--oa-radius-xs);
+}

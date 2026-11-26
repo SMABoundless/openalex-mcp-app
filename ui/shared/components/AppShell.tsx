@@ -1,6 +1,7 @@
 import type { ComponentChildren } from "preact";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { App } from "@modelcontextprotocol/ext-apps";
+import { BrandBar, categoryOf } from "./BrandBar";
 
 export interface ShellContext {
   /**
@@ -74,17 +75,26 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
     }
   };
 
+  const shellClass = `app-shell cat-${categoryOf(toolName).category}`;
+
   if (!data) {
-    if (error) return <div class="error">{error}</div>;
     return (
-      <div class="loading">
-        <div class="spinner" />
-        <p>Loading...</p>
+      <div class={shellClass}>
+        <BrandBar toolName={toolName} />
+        {error ? (
+          <div class="error">{error}</div>
+        ) : (
+          <div class="loading">
+            <div class="spinner" />
+            <p>Loading...</p>
+          </div>
+        )}
       </div>
     );
   }
   return (
-    <div class="app-shell">
+    <div class={shellClass}>
+      <BrandBar toolName={toolName} />
       {error && <div class="error">{error}</div>}
       {children(data, { navigate: canCallTools ? navigate : undefined, busy })}
     </div>
