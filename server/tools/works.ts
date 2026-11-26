@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
-import { WorkSearchInputSchema, WorkIdSchema, PaginationSchema, CursorSchema } from "../schemas/common.js";
-import { WORK_LIST_FIELDS, SEMANTIC_MAX_RESULTS, MAX_PER_PAGE } from "../constants.js";
+import { WorkSearchInputSchema, WorkIdSchema, PaginationSchema, CursorSchema, DetailSchema } from "../schemas/common.js";
+import { SEMANTIC_MAX_RESULTS, MAX_PER_PAGE } from "../constants.js";
 import { openalexRequest, getEntity, extractPagination, makePagination, queryOql } from "../services/openalex-client.js";
 import {
   formatWorkJson,
@@ -10,6 +10,7 @@ import {
   workDetailMarkdown,
   listText,
   rerankNote,
+  workListShape,
   pageSummary,
   firstIndex,
   toolResult,
@@ -23,19 +24,20 @@ const entries = (works: WorkOutput[], pageStart: number): string[] =>
   works.map((w, i) => workListEntry(w, pageStart + i + 1));
 
 /** Fetches the works with these OpenAlex IDs and returns them in the order the IDs were given. */
-async function fetchWorksInOrder(ids: string[]): Promise<WorkOutput[]> {
+async function fetchWorksInOrder(ids: string[], detail?: "full" | "brief"): Promise<WorkOutput[]> {
   if (ids.length === 0) return [];
+  const shape = workListShape(detail);
   const data = await openalexRequest<OpenAlexListResponse<Work>>({
     endpoint: "works",
     params: { filter: `openalex_id:${ids.join("|")}` },
     perPage: ids.length,
-    select: WORK_LIST_FIELDS,
+    select: shape.select,
   });
   const order = new Map(ids.map((workId, i) => [workId, i]));
   return data.results
     .slice()
     .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
-    .map(w => formatWorkJson(w, { compact: true }));
+    .map(w => formatWorkJson(w, shape.options));
 }
 
 export function registerWorksTools(server: McpServer): void {
@@ -59,6 +61,7 @@ Args:
   - query (string): Search query. In semantic mode this can be a sentence or a whole paragraph (up to 2,000 characters).
   - mode (string): "keyword" (default) matches words; "semantic" matches meaning and finds papers that use different wording. Semantic mode returns at most 50 results, ignores sort, page and cursor, and accepts only these filters: publication_year, type, language, is_oa, open_access.is_oa, has_abstract, has_fulltext, is_retracted, authorships.author.id, authorships.institutions.id, primary_location.source.id, funders.id.
   - rerank (boolean): Re-rank the best 100 keyword matches by how well each answers the query. It puts more relevant works first, and suits questions and longer queries. Doubles the search's cost ($0.002 instead of $0.001). Keyword mode in relevance order only. Default: false.
+  - detail (string): "full" (default) or "brief". Brief leaves out abstracts and topics, for about half the size.
   - filter (string, optional): OpenAlex filter syntax
   - sort (string): Sort order (relevance_score:desc, cited_by_count:desc, publication_date:desc, etc.)
   - limit (number): Results per page (1-100, default: 10)
@@ -74,8 +77,9 @@ Examples:
     inputSchema: WorkSearchInputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/search-works.html" } },
-  }, async ({ query, mode, rerank, filter, sort, limit, page, cursor }) => {
+  }, async ({ query, mode, rerank, detail, filter, sort, limit, page, cursor }) => {
     try {
+      const shape = workListShape(detail);
       const semantic = mode === "semantic";
       const relevanceOrder = sort === "relevance_score:desc";
       // OpenAlex refuses re-ranking with any other sort, so it is only sent when it can apply
@@ -86,7 +90,7 @@ Examples:
               endpoint: "works",
               params: { "search.semantic": query, filter },
               perPage: Math.min(limit, SEMANTIC_MAX_RESULTS),
-              select: WORK_LIST_FIELDS,
+              select: shape.select,
             }
           : {
               endpoint: "works",
@@ -94,12 +98,12 @@ Examples:
               perPage: limit,
               page,
               cursor,
-              select: WORK_LIST_FIELDS,
+              select: shape.select,
             }
       );
       const reranked = askRerank && data.meta.reranked === true;
       const note = rerankNote({ requested: rerank, applied: reranked, semantic, relevanceOrder });
-      const works = data.results.map(w => formatWorkJson(w, { compact: true }));
+      const works = data.results.map(w => formatWorkJson(w, shape.options));
       // Semantic search returns one ranked batch with nothing further to page through
       const pagination = semantic
         ? { total: data.meta.count, count: works.length, page: 1, perPage: data.meta.per_page, hasMore: false }
@@ -167,6 +171,7 @@ Args:
   - page (number): Page number (default: 1)
   - sort: Order by publication_date:desc, publication_date:asc, or cited_by_count:desc
   - cursor (string, optional): For going past 10,000 results. Pass "*" to start, then the cursor from the previous response.
+  - detail (string): "full" (default) or "brief", which leaves out abstracts and topics
 
 Returns: List of works that cite the specified work, plus its total citation count.`,
     inputSchema: {
@@ -177,11 +182,13 @@ Returns: List of works that cite the specified work, plus its total citation cou
         .default("publication_date:desc")
         .describe("Sort order for citing works"),
       cursor: CursorSchema,
+      detail: DetailSchema,
     },
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/get-citations.html" } },
-  }, async ({ id, limit, page, sort, cursor }) => {
+  }, async ({ id, limit, page, sort, cursor, detail }) => {
     try {
+      const shape = workListShape(detail);
       const work = await getEntity<Work>("works", id, "id,display_name,cited_by_count,counts_by_year");
       const data = await openalexRequest<OpenAlexListResponse<Work>>({
         endpoint: "works",
@@ -189,10 +196,10 @@ Returns: List of works that cite the specified work, plus its total citation cou
         perPage: limit,
         page,
         cursor,
-        select: WORK_LIST_FIELDS,
+        select: shape.select,
       });
       const pagination = extractPagination(data.meta, data.results.length, Boolean(cursor));
-      const citing = data.results.map(w => formatWorkJson(w, { compact: true }));
+      const citing = data.results.map(w => formatWorkJson(w, shape.options));
       const title = work.display_name || "Untitled";
       const output: CitationsOutput = {
         cited_work: {
@@ -233,21 +240,23 @@ Args:
   - id (string): Work identifier (OpenAlex ID, DOI, PMID or PMCID)
   - limit (number): Results per page (1-100, default: 10)
   - page (number): Page number (default: 1)
+  - detail (string): "full" (default) or "brief", which leaves out abstracts and topics
 
 Returns: List of works cited in the specified work's references.`,
     inputSchema: {
       id: WorkIdSchema,
       limit: PaginationSchema.shape.limit,
       page: PaginationSchema.shape.page,
+      detail: DetailSchema,
     },
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/get-references.html" } },
-  }, async ({ id, limit, page }) => {
+  }, async ({ id, limit, page, detail }) => {
     try {
       const work = await getEntity<Work>("works", id, "id,display_name,referenced_works");
       const allRefs = work.referenced_works ?? [];
       // The API returns works in its own order; fetchWorksInOrder restores the order of the reference list
-      const references = await fetchWorksInOrder(allRefs.slice((page - 1) * limit, page * limit));
+      const references = await fetchWorksInOrder(allRefs.slice((page - 1) * limit, page * limit), detail);
       const title = work.display_name || "Untitled";
       const pagination = makePagination(allRefs.length, page, limit, references.length);
       const output: ReferencesOutput = {
@@ -285,21 +294,23 @@ Args:
   - id (string): Work identifier (OpenAlex ID, DOI, PMID or PMCID)
   - limit (number): Results per page (1-100, default: 10)
   - page (number): Page number (default: 1)
+  - detail (string): "full" (default) or "brief", which leaves out abstracts and topics
 
 Returns: List of works related to the specified work.`,
     inputSchema: {
       id: WorkIdSchema,
       limit: PaginationSchema.shape.limit,
       page: PaginationSchema.shape.page,
+      detail: DetailSchema,
     },
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/get-related-works.html" } },
-  }, async ({ id, limit, page }) => {
+  }, async ({ id, limit, page, detail }) => {
     try {
       const work = await getEntity<Work>("works", id, "id,display_name,related_works");
       // Some listed IDs no longer resolve (merged or removed works). The list is
       // short, so fetch it whole, keep what exists, and page through that.
-      const allRelated = await fetchWorksInOrder((work.related_works ?? []).slice(0, MAX_PER_PAGE));
+      const allRelated = await fetchWorksInOrder((work.related_works ?? []).slice(0, MAX_PER_PAGE), detail);
       const related = allRelated.slice((page - 1) * limit, page * limit);
       const title = work.display_name || "Untitled";
       const pagination = makePagination(allRelated.length, page, limit, related.length);

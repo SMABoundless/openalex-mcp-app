@@ -20,7 +20,16 @@ export function registerAllUiResources(server: McpServer): void {
     const uri = `ui://openalex/${name}.html`;
     registerAppResource(server, `OpenAlex ${name}`, uri, {}, async () => {
       const html = await fs.readFile(path.join(UI_DIR, `${name}.html`), "utf-8");
-      return { contents: [{ uri, mimeType: RESOURCE_MIME_TYPE, text: html }] };
+      return {
+        contents: [{
+          uri,
+          mimeType: RESOURCE_MIME_TYPE,
+          text: html,
+          // Views run in a sandboxed frame. Without this permission the copy
+          // buttons' clipboard writes silently do nothing.
+          _meta: { ui: { permissions: { clipboardWrite: {} } } },
+        }],
+      };
     });
   }
 }

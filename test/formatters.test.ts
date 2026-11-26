@@ -9,9 +9,11 @@ import {
   workDetailMarkdown,
   listText,
   firstIndex,
-  rerankNote
+  rerankNote,
+  libkeyUrl,
+  workListShape
 } from "../server/services/format-utils.js";
-import { ABSTRACT_SNIPPET_LENGTH, CHARACTER_LIMIT, LIST_AUTHORS } from "../server/constants.js";
+import { ABSTRACT_SNIPPET_LENGTH, CHARACTER_LIMIT, LIST_AUTHORS, WORK_BRIEF_FIELDS, WORK_LIST_FIELDS } from "../server/constants.js";
 import type { Author, Work } from "../server/types.js";
 
 // ---------- fixtures ----------
@@ -241,4 +243,37 @@ test("rerankNote says when re-ranking was applied, and why when it was asked for
   assert.match(rerankNote({ ...base, semantic: true }), /semantic search already orders/);
   assert.match(rerankNote({ ...base, relevanceOrder: false }), /another sort was chosen/);
   assert.match(rerankNote(base), /past them/);
+});
+
+test("libkeyUrl builds a link from a DOI in either form and refuses anything else", () => {
+  assert.equal(libkeyUrl("https://doi.org/10.7717/peerj.4375"), "https://libkey.io/10.7717/peerj.4375");
+  assert.equal(libkeyUrl("10.7717/peerj.4375"), "https://libkey.io/10.7717/peerj.4375");
+  assert.equal(libkeyUrl(null), null);
+  assert.equal(libkeyUrl(""), null);
+  assert.equal(libkeyUrl("W2741809807"), null);
+  assert.equal(libkeyUrl("https://example.org/not-a-doi"), null);
+});
+
+test("the single-work text offers a LibKey link only when the work has a DOI", () => {
+  const withDoi = workDetailMarkdown(formatWorkJson(makeWork()));
+  assert.match(withDoi, /\(LibKey\):\*\* https:\/\/libkey\.io\/10\.1234\/example/);
+  const without = workDetailMarkdown(formatWorkJson(makeWork({ doi: undefined })));
+  assert.doesNotMatch(without, /LibKey/);
+});
+
+test("brief detail leaves out abstracts and topics, and asks OpenAlex for neither", () => {
+  const work = makeWork({ abstract_inverted_index: invertedIndex(LONG_ABSTRACT) });
+  const full = formatWorkJson(work, workListShape("full").options);
+  const brief = formatWorkJson(work, workListShape("brief").options);
+  assert.ok(full.abstract);
+  assert.equal(brief.abstract, null);
+  assert.equal(brief.abstract_truncated, false);
+  assert.deepEqual(brief.topics, []);
+  assert.equal(brief.title, full.title);
+  assert.deepEqual(brief.authors, full.authors);
+  assert.doesNotMatch(workListEntry(brief, 1), /Abstract:/);
+
+  assert.equal(workListShape(undefined).select, WORK_LIST_FIELDS);
+  assert.equal(workListShape("brief").select, WORK_BRIEF_FIELDS);
+  assert.doesNotMatch(WORK_BRIEF_FIELDS, /abstract_inverted_index|topics/);
 });

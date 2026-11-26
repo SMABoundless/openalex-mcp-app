@@ -38,6 +38,12 @@ export const WORK_LIST_FIELDS = [
   "abstract_inverted_index", "topics", "referenced_works_count"
 ].join(",");
 
+// The same without abstracts and topics, for detail: "brief"
+export const WORK_BRIEF_FIELDS = [
+  "id", "doi", "display_name", "publication_year", "publication_date", "type",
+  "authorships", "primary_location", "cited_by_count", "open_access", "referenced_works_count"
+].join(",");
+
 export const AUTHOR_LIST_FIELDS = [
   "id", "orcid", "display_name", "works_count", "cited_by_count",
   "summary_stats", "last_known_institutions", "affiliations", "topics"

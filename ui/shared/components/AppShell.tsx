@@ -2,6 +2,7 @@ import type { ComponentChildren } from "preact";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { App } from "@modelcontextprotocol/ext-apps";
 import { BrandBar, categoryOf } from "./BrandBar";
+import { CopyButton } from "./CopyButton";
 
 export interface ShellContext {
   /**
@@ -34,6 +35,7 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [canCallTools, setCanCallTools] = useState(false);
+  const [blockedLink, setBlockedLink] = useState<string | null>(null);
   const [app] = useState(() => new App({ name: "OpenAlex", version: "1.0.0" }));
   const args = useRef<Record<string, unknown>>({});
 
@@ -59,6 +61,22 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
       .catch(() => setError("Could not connect to the host."));
   }, []);
 
+  // Views run in a sandboxed frame that may not open links itself, so every
+  // outside link is handed to the host. If the host refuses, the address is
+  // shown so it can still be copied.
+  const openLink = async (event: MouseEvent) => {
+    const anchor = (event.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+    const url = anchor?.getAttribute("href") ?? "";
+    if (!anchor || !/^https?:\/\//i.test(url)) return;
+    event.preventDefault();
+    try {
+      const result = await app.openLink({ url });
+      setBlockedLink(result.isError ? url : null);
+    } catch {
+      setBlockedLink(url);
+    }
+  };
+
   const navigate = async (changes: Record<string, unknown>) => {
     if (busy) return;
     setBusy(true);
@@ -79,7 +97,7 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
 
   if (!data) {
     return (
-      <div class={shellClass}>
+      <div class={shellClass} onClick={openLink}>
         <BrandBar toolName={toolName} />
         {error ? (
           <div class="error">{error}</div>
@@ -93,9 +111,15 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
     );
   }
   return (
-    <div class={shellClass}>
+    <div class={shellClass} onClick={openLink}>
       <BrandBar toolName={toolName} />
       {error && <div class="error">{error}</div>}
+      {blockedLink && (
+        <div class="notice" role="status">
+          The link could not be opened from here. Copy it instead: <code>{blockedLink}</code>{" "}
+          <CopyButton text={blockedLink} />
+        </div>
+      )}
       {children(data, { navigate: canCallTools ? navigate : undefined, busy })}
     </div>
   );

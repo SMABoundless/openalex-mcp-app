@@ -3,11 +3,13 @@ import type { WorkOutput } from "../server/output-types";
 import { AppShell } from "./shared/components/AppShell";
 import { MetricBadge } from "./shared/components/MetricBadge";
 import { OABadge } from "./shared/components/OABadge";
-import { doiUrl } from "./shared/utils/format";
+import { CopyButton } from "./shared/components/CopyButton";
+import { doiUrl, libkeyUrl, shortId } from "./shared/utils/format";
 import "./shared/styles/base.css";
 import "./shared/styles/components.css";
 
 function WorkDetail({ work }: { work: WorkOutput }) {
+  const fullText = libkeyUrl(work.doi);
   return (
     <div class="detail-container">
       <h1 class="detail-title">
@@ -60,14 +62,26 @@ function WorkDetail({ work }: { work: WorkOutput }) {
         </section>
       )}
 
-      {work.doi && (
-        <section class="detail-section">
-          <h3>DOI</h3>
-          <a href={doiUrl(work.doi)} target="_blank" rel="noopener noreferrer" class="external-link">
-            {work.doi}
-          </a>
-        </section>
-      )}
+      <section class="detail-section">
+        <h3>Identifiers and Links</h3>
+        <ul class="plain-list">
+          {work.doi && (
+            <li class="id-row">
+              <a href={doiUrl(work.doi)} target="_blank" rel="noopener noreferrer" class="external-link">{work.doi}</a>
+              <CopyButton text={work.doi} label="DOI" />
+            </li>
+          )}
+          {fullText && (
+            <li class="id-row">
+              <a href={fullText} target="_blank" rel="noopener noreferrer" class="external-link">Full text through your library (LibKey)</a>
+            </li>
+          )}
+          <li class="id-row">
+            <span>OpenAlex ID <code>{shortId(work.id)}</code></span>
+            <CopyButton text={shortId(work.id)} label="ID" />
+          </li>
+        </ul>
+      </section>
     </div>
   );
 }

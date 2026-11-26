@@ -1,5 +1,5 @@
 import type { WorkOutput } from "../../../server/output-types";
-import { formatAuthors, formatNumber, doiUrl } from "../utils/format";
+import { formatAuthors, formatNumber, doiUrl, libkeyUrl } from "../utils/format";
 import { OABadge } from "./OABadge";
 
 interface WorkCardProps {
@@ -8,6 +8,7 @@ interface WorkCardProps {
 }
 
 export function WorkCard({ work, compact }: WorkCardProps) {
+  const fullText = libkeyUrl(work.doi);
   return (
     <div class="card">
       <div class="card-title">
@@ -30,6 +31,11 @@ export function WorkCard({ work, compact }: WorkCardProps) {
           {formatNumber(work.cited_by_count)}
         </span>
         <OABadge status={work.open_access.status} url={work.open_access.url} />
+        {fullText && (
+          <a class="text-link" href={fullText} target="_blank" rel="noopener noreferrer" title="Full text through your library, via LibKey">
+            Full text
+          </a>
+        )}
       </div>
       {!compact && work.abstract && <div class="card-abstract">{work.abstract}</div>}
       {!compact && work.topics.length > 0 && (

@@ -4,6 +4,7 @@ import { AppShell, type ShellContext } from "./shared/components/AppShell";
 import { WorkList } from "./shared/components/WorkList";
 import { Pagination } from "./shared/components/Pagination";
 import { BarChart } from "./shared/components/BarChart";
+import { CopyButton } from "./shared/components/CopyButton";
 import { formatNumber, shortId } from "./shared/utils/format";
 import "./shared/styles/base.css";
 import "./shared/styles/components.css";
@@ -78,7 +79,9 @@ function QueryResult({ data, ctx }: { data: QueryOutput; ctx: ShellContext }) {
           {formatNumber(data.total)} {data.entity}
           {data.kind === "table" && " counted"}
         </h2>
-        <p class="results-subtitle query-echo">{data.oql}</p>
+        <p class="results-subtitle">
+          <span class="query-echo">{data.oql}</span> <CopyButton text={data.oql} label="query" />
+        </p>
       </header>
 
       {data.kind === "table" && data.table && <ResultTable table={data.table} />}

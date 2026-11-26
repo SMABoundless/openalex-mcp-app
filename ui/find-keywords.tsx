@@ -2,6 +2,7 @@ import { render } from "preact";
 import type { FindKeywordsOutput, KeywordOutput } from "../server/output-types";
 import { AppShell } from "./shared/components/AppShell";
 import { MetricBadge } from "./shared/components/MetricBadge";
+import { CopyButton } from "./shared/components/CopyButton";
 import "./shared/styles/base.css";
 import "./shared/styles/components.css";
 
@@ -13,7 +14,10 @@ function KeywordCard({ keyword }: { keyword: KeywordOutput }) {
   return (
     <div class="card">
       <div class="card-title">{keyword.name}</div>
-      <div class="card-meta">ID: <code>{keyword.id}</code></div>
+      <div class="card-meta id-row">
+        <span>ID: <code>{keyword.id}</code></span>
+        <CopyButton text={keyword.id} label="ID" />
+      </div>
       <div class="metric-row">
         <MetricBadge label="Works" value={keyword.works_count} />
       </div>
