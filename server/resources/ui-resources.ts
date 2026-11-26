@@ -11,6 +11,7 @@ const UI_FILES = [
   "search-institutions", "get-institution", "get-institution-works",
   "search-sources", "get-source", "search-topics", "search-funders", "group-works",
   "get-related-works", "get-topic", "get-funder", "search-publishers", "get-publisher",
+  "analyze-works", "resolve-references",
 ];
 
 export function registerAllUiResources(server: McpServer): void {
