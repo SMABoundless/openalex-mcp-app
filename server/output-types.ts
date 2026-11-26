@@ -141,3 +141,95 @@ export interface InstitutionWorksOutput {
   pagination: PaginationInfo;
   works: WorkOutput[];
 }
+
+// ---------- Sources (journals, repositories, conferences) ----------
+
+// In search results top_topics and counts_by_year are left empty;
+// openalex_get_source returns them.
+export interface SourceOutput {
+  id: string;
+  display_name: string;
+  type: string | null;
+  issn_l: string | null;
+  issn: string[];
+  publisher: string | null;
+  country_code: string | null;
+  is_oa: boolean;
+  is_in_doaj: boolean;
+  apc_usd: number | null;
+  works_count: number;
+  cited_by_count: number;
+  h_index: number | null;
+  two_year_mean_citedness: number | null;
+  homepage_url: string | null;
+  top_topics: TopicCount[];
+  counts_by_year: YearCount[];
+}
+
+export interface SearchSourcesOutput {
+  pagination: PaginationInfo;
+  sources: SourceOutput[];
+}
+
+// ---------- Topics ----------
+
+export interface TopicOutput {
+  id: string;
+  display_name: string;
+  description: string | null;
+  keywords: string[];
+  subfield: string | null;
+  field: string | null;
+  domain: string | null;
+  works_count: number;
+  cited_by_count: number;
+}
+
+export interface SearchTopicsOutput {
+  pagination: PaginationInfo;
+  topics: TopicOutput[];
+}
+
+// ---------- Funders ----------
+
+export interface FunderOutput {
+  id: string;
+  display_name: string;
+  alternate_titles: string[];
+  country_code: string | null;
+  description: string | null;
+  homepage_url: string | null;
+  ror: string | null;
+  awards_count: number | null;
+  works_count: number;
+  cited_by_count: number;
+  h_index: number | null;
+}
+
+export interface SearchFundersOutput {
+  pagination: PaginationInfo;
+  funders: FunderOutput[];
+}
+
+// ---------- Grouping ----------
+
+export interface GroupOutput {
+  // The OpenAlex ID when grouping by an entity, otherwise the raw value
+  key: string;
+  name: string;
+  count: number;
+  // Share of all matching works, 0-1. Shares can sum to more than 1 when a
+  // work can belong to several groups (for example, several institutions).
+  share: number;
+}
+
+export interface GroupWorksOutput {
+  group_by: string;
+  query: string | null;
+  filter: string | null;
+  // Number of works matching the query and filter
+  total_works: number;
+  groups: GroupOutput[];
+  // True when there are more groups than were returned
+  more_groups: boolean;
+}

@@ -7,6 +7,9 @@ import cors from "cors";
 import { registerWorksTools } from "./tools/works.js";
 import { registerAuthorsTools } from "./tools/authors.js";
 import { registerInstitutionsTools } from "./tools/institutions.js";
+import { registerSourcesTools } from "./tools/sources.js";
+import { registerTopicsAndFundersTools } from "./tools/topics-funders.js";
+import { registerGroupingTools } from "./tools/grouping.js";
 import { registerAllUiResources } from "./resources/ui-resources.js";
 
 function createServer(): McpServer {
@@ -14,6 +17,9 @@ function createServer(): McpServer {
   registerWorksTools(server);
   registerAuthorsTools(server);
   registerInstitutionsTools(server);
+  registerSourcesTools(server);
+  registerTopicsAndFundersTools(server);
+  registerGroupingTools(server);
   registerAllUiResources(server);
   return server;
 }

@@ -16,6 +16,7 @@
   margin-bottom: 4px;
   line-height: 1.4;
 }
+.card-title { overflow-wrap: anywhere; }
 .card-title a { color: var(--oa-accent); }
 .card-meta {
   font-size: 0.85rem;
@@ -289,3 +290,8 @@
 .hbar-track { height: 10px; border-radius: 5px; background: var(--oa-bg-secondary); overflow: hidden; }
 .hbar-fill { display: block; height: 100%; border-radius: 5px; background: var(--oa-accent); opacity: 0.85; }
 .hbar-value { color: var(--oa-text-secondary); font-variant-numeric: tabular-nums; }
+
+/* Small additions for the source, topic, funder and grouping views */
+.card-footnote { margin: 8px 0 0; font-size: 0.78rem; }
+.results-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table-note { margin-top: 8px; }
