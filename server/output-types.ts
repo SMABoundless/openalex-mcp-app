@@ -10,6 +10,10 @@ export interface PaginationInfo {
   perPage: number;
   hasMore: boolean;
   nextPage?: number;
+  // Set when the request used cursor paging: there are no page numbers, and
+  // the next batch is fetched by passing nextCursor back as `cursor`.
+  cursorMode?: boolean;
+  nextCursor?: string;
 }
 
 export interface YearCount {
@@ -47,7 +51,6 @@ export interface WorkOutput {
   abstract_truncated: boolean;
   topics: { name: string; id: string; score: number | null }[];
   referenced_works_count: number;
-  related_works_count: number;
 }
 
 export interface SearchWorksOutput {

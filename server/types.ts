@@ -8,9 +8,10 @@
 export interface OpenAlexMeta {
   count: number;
   db_response_time_ms: number;
-  page: number;
+  // null when cursor paging is used
+  page: number | null;
   per_page: number;
-  next_cursor?: string;
+  next_cursor?: string | null;
 }
 
 export interface OpenAlexListResponse<T> {
@@ -95,6 +96,7 @@ export interface Work {
   // Related works
   related_works: string[];
   referenced_works: string[];
+  referenced_works_count?: number;
   
   // Counts
   counts_by_year: CountByYear[];

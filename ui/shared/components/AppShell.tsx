@@ -3,8 +3,11 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import { App } from "@modelcontextprotocol/ext-apps";
 
 export interface ShellContext {
-  /** Fetch another page of the same query. Undefined when the host does not let the app call tools. */
-  goToPage?: (page: number) => void;
+  /**
+   * Re-run the same query with some arguments changed, e.g. { page: 2 } or
+   * { cursor: "..." }. Undefined when the host does not let the app call tools.
+   */
+  navigate?: (changes: Record<string, unknown>) => void;
   /** True while another page is being fetched. */
   busy: boolean;
 }
@@ -55,11 +58,11 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
       .catch(() => setError("Could not connect to the host."));
   }, []);
 
-  const goToPage = async (page: number) => {
+  const navigate = async (changes: Record<string, unknown>) => {
     if (busy) return;
     setBusy(true);
     try {
-      const nextArgs = { ...args.current, page };
+      const nextArgs = { ...args.current, ...changes };
       const result = await app.callServerTool({ name: toolName, arguments: nextArgs });
       args.current = nextArgs;
       applyResult(result);
@@ -83,7 +86,7 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
   return (
     <div class="app-shell">
       {error && <div class="error">{error}</div>}
-      {children(data, { goToPage: canCallTools ? goToPage : undefined, busy })}
+      {children(data, { navigate: canCallTools ? navigate : undefined, busy })}
     </div>
   );
 }

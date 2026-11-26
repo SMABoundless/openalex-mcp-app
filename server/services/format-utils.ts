@@ -118,8 +118,7 @@ export function formatWorkJson(work: Work, options: { compact?: boolean } = {}):
       id: t.id,
       score: t.score ?? null
     })),
-    referenced_works_count: work.referenced_works?.length ?? 0,
-    related_works_count: work.related_works?.length ?? 0
+    referenced_works_count: work.referenced_works_count ?? work.referenced_works?.length ?? 0
   };
 }
 
@@ -352,14 +351,24 @@ export function listText(options: {
     notes.push(`Output limit reached: showing ${included} of the ${entries.length} results on this page. Use a smaller limit to see the rest.`);
   }
   if (pagination.hasMore) {
-    notes.push(`More results available: use page=${pagination.nextPage}.`);
+    notes.push(
+      pagination.cursorMode
+        ? `More results available: pass cursor="${pagination.nextCursor}".`
+        : `More results available: use page=${pagination.nextPage}.`
+    );
   }
   if (notes.length > 0) parts.push("", ...notes);
   return parts.join("\n");
 }
 
 export function pageSummary(pagination: PaginationInfo, noun: string): string {
-  return `${num(pagination.total)} ${noun} in total; page ${pagination.page}, ${pagination.count} shown.`;
+  const where = pagination.cursorMode ? "cursor paging" : `page ${pagination.page}`;
+  return `${num(pagination.total)} ${noun} in total; ${where}, ${pagination.count} shown.`;
+}
+
+/** Position of the first entry on this page, for numbering. Unknown under cursor paging, so numbering restarts. */
+export function firstIndex(page: number, limit: number, cursor: string | undefined): number {
+  return cursor ? 0 : (page - 1) * limit;
 }
 
 type TextContent = { type: "text"; text: string };

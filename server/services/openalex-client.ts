@@ -95,7 +95,7 @@ function buildError(status: number, body: string, budget: Budget | null): OpenAl
   if (status === 404) {
     return new OpenAlexError("Not found in OpenAlex. Check that the ID is valid.", status);
   }
-  return new OpenAlexError(`OpenAlex API error (${status})${budgetText}: ${detail || "no details"}`, status);
+  return new OpenAlexError(`OpenAlex API error (${status}): ${detail || "no details"}`, status);
 }
 
 // ============================================
@@ -107,6 +107,10 @@ export interface RequestOptions {
   params?: Record<string, string | number | boolean | undefined>;
   perPage?: number;
   page?: number;
+  /** Cursor paging: "*" to start, then the next_cursor from the previous response. Replaces page. */
+  cursor?: string;
+  /** Comma-separated top-level fields to return. */
+  select?: string;
 }
 
 /**
@@ -118,10 +122,15 @@ export async function openalexRequest<T>(options: RequestOptions): Promise<T> {
   if (OPENALEX_API_KEY) url.searchParams.set("api_key", OPENALEX_API_KEY);
 
   const perPage = Math.min(options.perPage ?? DEFAULT_PER_PAGE, MAX_PER_PAGE);
-  url.searchParams.set("per-page", String(perPage));
+  url.searchParams.set("per_page", String(perPage));
 
-  if (options.page) {
+  if (options.cursor) {
+    url.searchParams.set("cursor", options.cursor);
+  } else if (options.page) {
     url.searchParams.set("page", String(options.page));
+  }
+  if (options.select) {
+    url.searchParams.set("select", options.select);
   }
 
   if (options.params) {
@@ -173,9 +182,10 @@ export async function openalexRequest<T>(options: RequestOptions): Promise<T> {
 /**
  * Fetch a single entity by ID
  */
-export async function getEntity<T>(entityType: string, id: string): Promise<T> {
+export async function getEntity<T>(entityType: string, id: string, select?: string): Promise<T> {
   return openalexRequest<T>({
-    endpoint: `${entityType}/${normalizeOpenAlexId(id)}`
+    endpoint: `${entityType}/${normalizeOpenAlexId(id)}`,
+    select
   });
 }
 
@@ -250,8 +260,21 @@ export function makePagination(total: number, page: number, perPage: number, cou
 }
 
 export function extractPagination(
-  meta: { count: number; page: number; per_page: number },
-  count: number
+  meta: { count: number; page: number | null; per_page: number; next_cursor?: string | null },
+  count: number,
+  usedCursor: boolean = false
 ): PaginationInfo {
-  return makePagination(meta.count, meta.page, meta.per_page, count);
+  if (usedCursor) {
+    const nextCursor = count > 0 && meta.next_cursor ? meta.next_cursor : undefined;
+    return {
+      total: meta.count,
+      count,
+      page: 1,
+      perPage: meta.per_page,
+      hasMore: Boolean(nextCursor),
+      cursorMode: true,
+      ...(nextCursor ? { nextCursor } : {})
+    };
+  }
+  return makePagination(meta.count, meta.page ?? 1, meta.per_page, count);
 }

@@ -9,7 +9,7 @@ export const OPENALEX_API_KEY = process.env.OPENALEX_API_KEY?.trim() || undefine
 export const API_KEY_URL = "https://openalex.org/settings/api";
 
 // Response limits
-export const DEFAULT_PER_PAGE = 25;
+export const DEFAULT_PER_PAGE = 10;
 export const MAX_PER_PAGE = 100;
 
 // OpenAlex basic paging stops at 10,000 results (page * per_page)
@@ -24,6 +24,27 @@ export const ABSTRACT_SNIPPET_LENGTH = 300;
 
 // Authors listed per work in result lists
 export const LIST_AUTHORS = 5;
+
+// Semantic search returns at most this many results and cannot be paged
+export const SEMANTIC_MAX_RESULTS = 50;
+
+// Fields requested for result lists. Asking only for what the formatters use
+// keeps responses small and fast. Only top-level fields can be selected.
+export const WORK_LIST_FIELDS = [
+  "id", "doi", "display_name", "publication_year", "publication_date", "type",
+  "authorships", "primary_location", "cited_by_count", "open_access",
+  "abstract_inverted_index", "topics", "referenced_works_count"
+].join(",");
+
+export const AUTHOR_LIST_FIELDS = [
+  "id", "orcid", "display_name", "works_count", "cited_by_count",
+  "summary_stats", "last_known_institutions", "affiliations", "topics"
+].join(",");
+
+export const INSTITUTION_LIST_FIELDS = [
+  "id", "ror", "display_name", "type", "country_code", "geo",
+  "works_count", "cited_by_count", "summary_stats"
+].join(",");
 
 // OpenAlex entity prefixes for ID resolution
 export const OPENALEX_PREFIXES = {

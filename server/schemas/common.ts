@@ -19,6 +19,14 @@ export const PaginationSchema = z.object({
     .describe("Page number for pagination (starts at 1)")
 });
 
+export const CursorSchema = z.string()
+  .min(1)
+  .optional()
+  .describe(
+    "Cursor paging, for going past the first 10,000 results. Pass \"*\" to start, then the cursor " +
+    "returned with the previous response. When set, page is ignored. Needs an API key after the first batch."
+  );
+
 // Sort options
 export const WorkSortSchema = z.enum([
   "relevance_score:desc",
@@ -90,19 +98,29 @@ export const FilterSchema = z.string()
 
 export const SearchQuerySchema = z.string()
   .min(1)
-  .max(500)
+  .max(2000)
   .describe("Full-text search query. Searches titles, abstracts, and full text where available.");
 
 // ============================================
 // Composite Schemas for Tools (no response_format — apps always return JSON)
 // ============================================
 
+export const SearchModeSchema = z.enum(["keyword", "semantic"])
+  .default("keyword")
+  .describe(
+    "keyword: match the words in titles, abstracts and full text (default). " +
+    "semantic: match by meaning, for when the right papers may use different wording; " +
+    "returns at most 50 results, cannot be sorted or paged, and accepts only some filters."
+  );
+
 export const WorkSearchInputSchema = {
   query: SearchQuerySchema,
+  mode: SearchModeSchema,
   filter: FilterSchema,
   sort: WorkSortSchema,
   limit: PaginationSchema.shape.limit,
   page: PaginationSchema.shape.page,
+  cursor: CursorSchema,
 };
 
 export const AuthorSearchInputSchema = {

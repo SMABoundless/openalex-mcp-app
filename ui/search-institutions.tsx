@@ -23,7 +23,7 @@ function SearchInstitutionsView() {
                 <InstitutionCard key={inst.id} institution={inst} />
               ))}
             </div>
-            <Pagination pagination={data.pagination} onPageChange={ctx.goToPage} busy={ctx.busy} />
+            <Pagination pagination={data.pagination} onNavigate={ctx.navigate} busy={ctx.busy} />
           </div>
         )
       }
