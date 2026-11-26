@@ -7,7 +7,10 @@ import {
   partClause,
   filterClauses,
   buildKeywordQueries,
-  sampleQuery
+  sampleQuery,
+  restrictToWorks,
+  partQuery,
+  diagnoseSeeds
 } from "../server/services/keywords.js";
 
 test("keywordSlug accepts a full ID, a prefixed ID or a bare slug", () => {
@@ -88,4 +91,33 @@ test("the words-only query is left out when a part has no words or no part has k
 
 test("sampleQuery appends the random-sample step", () => {
   assert.equal(sampleQuery("get works where keyword is (bibliometrics)", 5), "get works where keyword is (bibliometrics) sample 5");
+});
+
+test("restrictToWorks narrows a query to the given works, and partQuery leaves the filters off", () => {
+  assert.equal(
+    restrictToWorks("get works where keyword is (bibliometrics) and year >= (2020)", ["W1", "W2"]),
+    "get works where keyword is (bibliometrics) and year >= (2020) and openalex id is (W1 or W2)"
+  );
+  assert.equal(partQuery(subject), "get works where keyword is (bibliometrics)");
+  assert.equal(
+    partQuery(method),
+    'get works where (title-abstract-keywords has ("citation chaining" or snowballing) or keyword is (citation-searching or snowballing))'
+  );
+});
+
+test("diagnoseSeeds names the parts a missed seed fails, or says a filter excluded it", () => {
+  const out = diagnoseSeeds(
+    ["W1", "W2", "W3", "W4"],
+    new Set(["W1"]),
+    [method, setting],
+    [new Set(["W2", "W4"]), new Set(["W3", "W4"])]
+  );
+  assert.deepEqual(out, [
+    { id: "W1", found: true, missingParts: [], excludedByFilters: false },
+    { id: "W2", found: false, missingParts: ["setting"], excludedByFilters: false },
+    { id: "W3", found: false, missingParts: ["method"], excludedByFilters: false },
+    { id: "W4", found: false, missingParts: [], excludedByFilters: true }
+  ]);
+  const neither = diagnoseSeeds(["W9"], new Set(), [method, setting], [new Set(), new Set()]);
+  assert.deepEqual(neither[0].missingParts, ["method", "setting"]);
 });

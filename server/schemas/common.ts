@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
   MAX_PER_PAGE, DEFAULT_PER_PAGE, MAX_REFERENCES, MAX_REVIEWS, MAX_PAID_REVIEW_TEXTS, WORK_TYPES,
-  EXPORT_DEFAULT_RECORDS, EXPORT_MAX_RECORDS
+  EXPORT_DEFAULT_RECORDS, EXPORT_MAX_RECORDS, MAX_SEEDS
 } from "../constants.js";
 
 // ============================================
@@ -289,6 +289,10 @@ export const KeywordSearchInputSchema = {
   open_access_only: z.boolean().default(false).describe("Only open access works"),
   language: z.string().regex(/^[a-z]{2,3}$/).optional().describe("Language code, e.g. \"en\""),
   sample_size: z.number().int().min(0).max(25).default(5).describe("Random matching works to return for checking (0-25, default: 5)"),
+  seeds: z.array(z.string().min(1).max(300)).max(MAX_SEEDS).optional().describe(
+    `Papers already known to be relevant, by OpenAlex ID, DOI, PMID or PMCID (up to ${MAX_SEEDS}). ` +
+    "The search is tested against them: it reports which it retrieves, and for each one missed, which part of the search it fails."
+  ),
 };
 
 // ============================================

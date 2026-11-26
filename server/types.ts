@@ -197,8 +197,9 @@ export interface WorkTopic {
 }
 
 export interface Keyword {
-  keyword: string;
-  score: number;
+  id: string;
+  display_name: string;
+  score?: number;
 }
 
 export interface CountByYear {
