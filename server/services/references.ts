@@ -1,6 +1,6 @@
 // Matching citations to OpenAlex works.
 //
-// A reference with an identifier (DOI, PMID, OpenAlex ID) is looked up directly.
+// A reference with an identifier (DOI, PMID, PMCID, OpenAlex ID) is looked up directly.
 // A free-text citation is harder: searching for the whole string rarely puts the
 // right work first, because author names, journal and page numbers drown out the
 // title. So the title is picked out of the citation, searched for on its own, and
@@ -13,7 +13,7 @@ import type { ReferenceStatus, WorkOutput } from "../output-types.js";
 // Reading a reference
 // ============================================
 
-export type ReferenceIdKind = "doi" | "pmid" | "openalex_id";
+export type ReferenceIdKind = "doi" | "pmid" | "pmcid" | "openalex_id";
 
 export interface ParsedReference {
   /** The identifier found in the reference, if any, in the form the API accepts. */
@@ -26,6 +26,7 @@ const DOI_PATTERN = /\b10\.\d{4,9}\/[^\s"'<>]+/i;
 const OPENALEX_PATTERN = /^(?:https?:\/\/openalex\.org\/)?(W\d+)$/i;
 const PMID_LABELLED = /\bpmid:?\s*(\d{4,9})\b/i;
 const PMID_BARE = /^\d{6,9}$/;
+const PMCID_PATTERN = /\b(?:pmcid:?\s*)?(PMC\d{3,9})\b/i;
 
 /** Finds an identifier in a reference. A DOI inside a longer citation is picked out. */
 export function parseReference(raw: string): ParsedReference {
@@ -40,6 +41,11 @@ export function parseReference(raw: string): ParsedReference {
     const value = doi[0].replace(/[.,;:)\]]+$/, "");
     const rest = text.replace(doi[0], " ").replace(/https?:\/\/(dx\.)?doi\.org\/?/gi, " ").replace(/\bdoi:?/gi, " ");
     return { id: { kind: "doi", value }, hasText: words(rest).length >= 3 };
+  }
+
+  const pmcid = text.match(PMCID_PATTERN);
+  if (pmcid) {
+    return { id: { kind: "pmcid", value: pmcid[1].toUpperCase() }, hasText: words(text.replace(pmcid[0], " ")).length >= 3 };
   }
 
   if (PMID_BARE.test(text)) return { id: { kind: "pmid", value: text }, hasText: false };

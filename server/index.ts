@@ -15,6 +15,7 @@ import { registerAnalysisTools } from "./tools/analysis.js";
 import { registerReferencesTools } from "./tools/references.js";
 import { registerReviewsTools } from "./tools/reviews.js";
 import { registerQueryTools } from "./tools/query.js";
+import { registerKeywordsTools } from "./tools/keywords.js";
 import { registerAllUiResources } from "./resources/ui-resources.js";
 import { MCP_AUTH_TOKEN, isAuthorized } from "./auth.js";
 
@@ -31,6 +32,7 @@ function createServer(): McpServer {
   registerReferencesTools(server);
   registerReviewsTools(server);
   registerQueryTools(server);
+  registerKeywordsTools(server);
   registerAllUiResources(server);
   return server;
 }

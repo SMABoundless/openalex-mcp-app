@@ -209,3 +209,11 @@ test("between equally good candidates the more cited record is preferred", () =>
   const main = { ...work(title, 2018, ["Heather Piwowar"]), id: "https://openalex.org/W2", cited_by_count: 1700 };
   assert.equal(bestCandidate([minor, main], STATE_OF_OA)?.work.id, "https://openalex.org/W2");
 });
+
+test("parseReference recognises a PMCID, alone or inside a citation", () => {
+  assert.deepEqual(parseReference("PMC5815332"), { id: { kind: "pmcid", value: "PMC5815332" }, hasText: false });
+  assert.deepEqual(parseReference("pmcid: pmc5815332"), { id: { kind: "pmcid", value: "PMC5815332" }, hasText: false });
+  assert.deepEqual(parseReference(`${STATE_OF_OA} PMCID: PMC5815332`), { id: { kind: "pmcid", value: "PMC5815332" }, hasText: true });
+  // A DOI still wins when a citation has both
+  assert.equal(parseReference(`${STATE_OF_OA} doi:10.7717/peerj.4375 PMCID: PMC5815332`).id?.kind, "doi");
+});

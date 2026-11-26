@@ -25,7 +25,8 @@ const TITLE_ATTEMPTS = 2;
 /** Candidates looked at per search */
 const CANDIDATES = 5;
 
-const ID_PREFIX = { doi: "", pmid: "pmid:", openalex_id: "" } as const;
+const ID_PREFIX = { doi: "", pmid: "pmid:", pmcid: "pmcid:", openalex_id: "" } as const;
+const ID_LABEL = { doi: "DOI", pmid: "PMID", pmcid: "PMCID", openalex_id: "OpenAlex ID" } as const;
 
 type Found = Pick<ResolvedReference, "status" | "method" | "work" | "is_retracted" | "title_similarity" | "notes">;
 
@@ -96,7 +97,7 @@ async function resolveOne(reference: string, semantic: ReturnType<typeof spacedQ
       return found(work, parsed.id.kind, judgement.status, judgement.similarity, judgement.notes);
     } catch (error) {
       if (!(error instanceof OpenAlexError) || error.status !== 404) throw error;
-      const label = parsed.id.kind === "doi" ? "DOI" : parsed.id.kind === "pmid" ? "PMID" : "OpenAlex ID";
+      const label = ID_LABEL[parsed.id.kind];
       const note = `The ${label} ${parsed.id.value} is not in OpenAlex.`;
       if (!parsed.hasText) return { ...NOT_FOUND, notes: [note] };
       // The identifier may be mistyped; the rest of the citation can still be matched
@@ -141,7 +142,7 @@ Use this to:
 - Turn loosely written citations into records with DOIs and OpenAlex IDs
 - Spot retracted papers in a reference list
 
-Each reference can be a DOI, a PMID, an OpenAlex ID, or a citation in any style. A citation containing a DOI is looked up by that DOI, and its title is compared with the work the DOI leads to. A citation without an identifier is matched by its title.
+Each reference can be a DOI, a PMID, a PMCID, an OpenAlex ID, or a citation in any style. A citation containing a DOI is looked up by that DOI, and its title is compared with the work the DOI leads to. A citation without an identifier is matched by its title.
 
 Args:
   - references (string[]): 1-${MAX_REFERENCES} references, one per item
