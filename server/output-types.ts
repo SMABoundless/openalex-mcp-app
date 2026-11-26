@@ -382,7 +382,7 @@ export interface ResolvedReference {
   input: string;
   status: ReferenceStatus;
   // How the work was found; null when it was not
-  method: "doi" | "pmid" | "openalex_id" | "title_search" | "semantic_search" | null;
+  method: "doi" | "pmid" | "pmcid" | "openalex_id" | "title_search" | "semantic_search" | null;
   work: WorkOutput | null;
   is_retracted: boolean;
   // Share of the work's title words that appear in the reference, 0-1
@@ -481,4 +481,56 @@ export interface QueryOutput {
   works: WorkOutput[];
   entities: QueryEntity[];
   table: QueryTable | null;
+}
+
+// ---------- Keywords ----------
+
+export interface KeywordOutput {
+  // The keyword's short ID, e.g. "citation-analysis", as used in filters and in openalex_keyword_search
+  id: string;
+  name: string;
+  description: string | null;
+  // Other phrasings OpenAlex treats as this keyword
+  alternatives: string[];
+  // Works that carry this keyword
+  works_count: number;
+  // Its most cited works, as "Title (year)", to judge what the keyword covers
+  top_titles: string[];
+  // The phrases whose search found it
+  found_by: string[];
+  // How well it matches the description, 0-1; null when it was found by a phrase only
+  score: number | null;
+}
+
+export interface FindKeywordsOutput {
+  keywords: KeywordOutput[];
+  phrases: string[];
+  used_description: boolean;
+  // True when more keywords were found than are returned
+  truncated: boolean;
+}
+
+export interface KeywordSearchPart {
+  label: string;
+  text: string | null;
+  keywords: { id: string; name: string }[];
+  // Works matching this part's words, its keywords, and either. null where the part has no words or no keywords.
+  text_count: number | null;
+  keyword_count: number | null;
+  either_count: number;
+}
+
+export interface KeywordSearchOutput {
+  // Works matching every part
+  total: number;
+  // What the same search finds on words alone; null when a part has no words
+  text_only: number | null;
+  // Works the chosen keywords add beyond the words
+  added_by_keywords: number | null;
+  parts: KeywordSearchPart[];
+  // The filters applied, in words; empty when none
+  filters: string[];
+  // A random sample of the matching works, for checking they are on topic
+  sample: WorkOutput[];
+  oql: string;
 }

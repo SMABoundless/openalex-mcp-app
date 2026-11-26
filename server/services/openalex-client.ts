@@ -243,8 +243,17 @@ export async function getEntity<T>(entityType: string, id: string, select?: stri
 
 /**
  * Normalize various ID formats to something the OpenAlex API accepts.
- * Accepts: OpenAlex ID, DOI, PMID, ORCID, ROR, ISSN
+ * Accepts: OpenAlex ID, DOI, PMID, PMCID, ORCID, ROR, ISSN
  */
+/** The PubMed Central ID in a string that is one, e.g. "PMC5815332"; null when it is something else. */
+export function pmcidOf(raw: string): string | null {
+  const match = raw.trim().match(
+    /^(?:pmcid:\s*)?(PMC\d{3,9})$|^https?:\/\/(?:www\.ncbi\.nlm\.nih\.gov\/pmc\/articles|pmc\.ncbi\.nlm\.nih\.gov\/articles)\/(PMC\d{3,9})\/?$/i
+  );
+  const found = match?.[1] ?? match?.[2];
+  return found ? found.toUpperCase() : null;
+}
+
 export function normalizeOpenAlexId(rawId: string): string {
   const id = rawId.trim();
 
@@ -268,6 +277,10 @@ export function normalizeOpenAlexId(rawId: string): string {
   if (/^\d{4}-\d{3}[\dXx]$/.test(id)) {
     return `issn:${id.toUpperCase()}`;
   }
+
+  // PMCID: PMC5815332, pmcid:PMC5815332, or a PubMed Central article address
+  const pmcid = pmcidOf(id);
+  if (pmcid) return `pmcid:${pmcid}`;
 
   // PMID
   if (/^\d+$/.test(id) && id.length >= 6 && id.length <= 9) {

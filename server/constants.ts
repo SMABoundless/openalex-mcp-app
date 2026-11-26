@@ -98,6 +98,10 @@ export const MAX_PAID_REVIEW_TEXTS = 5;
 export const REVIEW_TEXT_LENGTH = 15000;
 export const REVIEW_TEXT_BUDGET = 40000;
 
+// openalex_find_keywords returns at most this many keywords, each with this many of its most cited titles
+export const MAX_KEYWORDS = 30;
+export const KEYWORD_TOP_TITLES = 3;
+
 // OpenAlex entity prefixes for ID resolution
 export const OPENALEX_PREFIXES = {
   work: "W",

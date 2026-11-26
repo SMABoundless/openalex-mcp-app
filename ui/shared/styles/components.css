@@ -326,3 +326,7 @@
   margin-top: 8px; padding: 10px 12px; border-left: 3px solid var(--oa-border); background: var(--oa-bg-secondary);
   white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; overflow-y: auto;
 }
+
+/* Keyword search parts */
+.part-detail { font-size: 0.8rem; margin-top: 2px; overflow-wrap: anywhere; white-space: normal; }
+.results-table td .tags-container { margin-top: 6px; }

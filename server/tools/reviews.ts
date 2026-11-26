@@ -60,7 +60,7 @@ Use this to:
 Reviews come mostly from publishers that practise open peer review (eLife, PeerJ, Copernicus journals, F1000Research, Qeios, Review Commons and others). Most works have none. Having reviews is not a mark of quality, and a missing review does not mean a paper was not reviewed.
 
 Args:
-  - id (string): The reviewed work (OpenAlex ID, DOI, or PMID)
+  - id (string): The reviewed work (OpenAlex ID, DOI, PMID or PMCID)
   - limit (number): Maximum reviews to return (1-25, default: 10)
   - include_text (boolean): Also fetch each review's text where its publisher serves it: eLife and Review Commons. Free. Default: false.
   - paid_text (boolean): With include_text, for other publishers also download the full text OpenAlex stores, at $0.01 each (at most ${MAX_PAID_REVIEW_TEXTS} per call). Unreliable: that stored text is often the reviewed article or empty, and the charge applies either way. Text that is not the review is discarded. Default: false.

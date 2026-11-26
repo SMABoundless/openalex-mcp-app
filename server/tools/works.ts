@@ -125,9 +125,10 @@ Accepts multiple ID formats:
 - OpenAlex ID: W2741809807 or https://openalex.org/W2741809807
 - DOI: 10.1038/s41586-020-2649-2 or https://doi.org/10.1038/s41586-020-2649-2
 - PMID: 32908142 (PubMed ID)
+- PMCID: PMC5815332 (PubMed Central ID)
 
 Args:
-  - id (string): Work identifier (OpenAlex ID, DOI, or PMID)
+  - id (string): Work identifier (OpenAlex ID, DOI, PMID or PMCID)
 
 Returns: Full work details including title, authors with affiliations, full abstract, citation count, reference count, open access status, and topics.`,
     inputSchema: { id: WorkIdSchema },
@@ -154,7 +155,7 @@ Use this to:
 - Discover research directions inspired by a work
 
 Args:
-  - id (string): Work identifier (OpenAlex ID, DOI, or PMID)
+  - id (string): Work identifier (OpenAlex ID, DOI, PMID or PMCID)
   - limit (number): Results per page (1-100, default: 10)
   - page (number): Page number (default: 1)
   - sort: Order by publication_date:desc, publication_date:asc, or cited_by_count:desc
@@ -222,7 +223,7 @@ Use this to:
 - Understand the intellectual lineage of research
 
 Args:
-  - id (string): Work identifier (OpenAlex ID, DOI, or PMID)
+  - id (string): Work identifier (OpenAlex ID, DOI, PMID or PMCID)
   - limit (number): Results per page (1-100, default: 10)
   - page (number): Page number (default: 1)
 
@@ -274,7 +275,7 @@ Use this to:
 OpenAlex lists only a handful of related works for each work (usually 10 to 20), most similar first. For a wider net, use openalex_search_works with mode "semantic".
 
 Args:
-  - id (string): Work identifier (OpenAlex ID, DOI, or PMID)
+  - id (string): Work identifier (OpenAlex ID, DOI, PMID or PMCID)
   - limit (number): Results per page (1-100, default: 10)
   - page (number): Page number (default: 1)
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_PER_PAGE, DEFAULT_PER_PAGE, MAX_REFERENCES, MAX_REVIEWS, MAX_PAID_REVIEW_TEXTS } from "../constants.js";
+import { MAX_PER_PAGE, DEFAULT_PER_PAGE, MAX_REFERENCES, MAX_REVIEWS, MAX_PAID_REVIEW_TEXTS, WORK_TYPES } from "../constants.js";
 
 // ============================================
 // Common Parameter Schemas
@@ -64,8 +64,8 @@ export const InstitutionSortSchema = z.enum([
 export const WorkIdSchema = z.string()
   .min(1)
   .describe(
-    "Work identifier. Accepts: OpenAlex ID (W2741809807), DOI (10.1038/s41586-020-2649-2), " +
-    "or full URLs (https://doi.org/..., https://openalex.org/W...)"
+    "Work identifier. Accepts: OpenAlex ID (W2741809807), DOI (10.1038/s41586-020-2649-2), PMID (29456894), " +
+    "PMCID (PMC5815332), or full URLs (https://doi.org/..., https://openalex.org/W...)"
   );
 
 export const AuthorIdSchema = z.string()
@@ -200,9 +200,53 @@ export const ResolveReferencesInputSchema = {
     .min(1)
     .max(MAX_REFERENCES)
     .describe(
-      `The references to check, one per item (1-${MAX_REFERENCES}). Each can be a DOI, a PMID, an OpenAlex ID, ` +
+      `The references to check, one per item (1-${MAX_REFERENCES}). Each can be a DOI, a PMID, a PMCID, an OpenAlex ID, ` +
       "or a citation in any style. A citation that contains a DOI is looked up by that DOI."
     ),
+};
+
+// ============================================
+// Keywords
+// ============================================
+
+export const FindKeywordsInputSchema = {
+  phrases: z.array(z.string().min(2).max(100))
+    .max(12)
+    .default([])
+    .describe("Key phrases of the topic, each searched among keyword names and descriptions (up to 12), e.g. [\"citation chaining\", \"snowballing\"]"),
+  description: z.string()
+    .min(20)
+    .max(2000)
+    .optional()
+    .describe("Optional. A sentence or two describing the topic; OpenAlex suggests keywords for it by meaning. Costs $0.01."),
+  per_phrase: z.number()
+    .int()
+    .min(1)
+    .max(10)
+    .default(5)
+    .describe("Keywords to take from each phrase's search (1-10, default: 5)"),
+};
+
+export const KeywordSearchInputSchema = {
+  parts: z.array(z.object({
+    label: z.string().min(1).max(100).describe("A short name for this part of the topic, e.g. \"method\""),
+    text: z.string().max(1000).optional().describe(
+      "Words for this part, matched in titles, abstracts and keyword names. Join alternatives with or; " +
+      "put phrases in double quotes; a wildcard needs quotes too. E.g. \"citation chaining\" or snowballing or \"snowball*\""
+    ),
+    keyword_ids: z.array(z.string().min(1).max(120)).max(15).optional().describe(
+      "Keyword IDs chosen for this part with openalex_find_keywords, e.g. [\"citation-searching\"]"
+    ),
+  }))
+    .min(1)
+    .max(6)
+    .describe("The parts of the topic (1-6). A work must match every part; within a part it can match the words or any of the keywords."),
+  from_year: z.number().int().min(1000).max(2100).optional().describe("Earliest publication year"),
+  to_year: z.number().int().min(1000).max(2100).optional().describe("Latest publication year"),
+  types: z.array(z.enum(WORK_TYPES)).max(10).optional().describe("Work types to include, e.g. [\"article\", \"review\"]"),
+  open_access_only: z.boolean().default(false).describe("Only open access works"),
+  language: z.string().regex(/^[a-z]{2,3}$/).optional().describe("Language code, e.g. \"en\""),
+  sample_size: z.number().int().min(0).max(25).default(5).describe("Random matching works to return for checking (0-25, default: 5)"),
 };
 
 // ============================================

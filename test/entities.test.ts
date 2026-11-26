@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizeOpenAlexId } from "../server/services/openalex-client.js";
+import { normalizeOpenAlexId, pmcidOf } from "../server/services/openalex-client.js";
 import {
   formatSourceJson,
   sourceListEntry,
@@ -299,4 +299,16 @@ test("yes/no groups are named Yes and No and recognised as boolean", () => {
   assert.equal(groupsAreBoolean(groups), true);
   assert.equal(groupsAreBoolean([{ key: "gold", name: "gold", count: 1, share: 1 }]), false);
   assert.equal(groupsAreBoolean([]), false);
+});
+
+test("normalizeOpenAlexId accepts a PMCID in its usual forms and leaves a PMID alone", () => {
+  assert.equal(normalizeOpenAlexId("PMC5815332"), "pmcid:PMC5815332");
+  assert.equal(normalizeOpenAlexId("pmc5815332"), "pmcid:PMC5815332");
+  assert.equal(normalizeOpenAlexId("pmcid:PMC5815332"), "pmcid:PMC5815332");
+  assert.equal(normalizeOpenAlexId("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5815332/"), "pmcid:PMC5815332");
+  assert.equal(normalizeOpenAlexId("https://pmc.ncbi.nlm.nih.gov/articles/PMC5815332"), "pmcid:PMC5815332");
+  assert.equal(normalizeOpenAlexId("29456894"), "pmid:29456894");
+  assert.equal(pmcidOf("PMC12"), null);
+  assert.equal(pmcidOf("W2741809807"), null);
+  assert.equal(pmcidOf("see PMC5815332 for details"), null);
 });

@@ -17,6 +17,7 @@ const STATUS: Record<ReferenceStatus, { label: string; cls: string }> = {
 const METHOD: Record<NonNullable<ResolvedReference["method"]>, string> = {
   doi: "by DOI",
   pmid: "by PMID",
+  pmcid: "by PMCID",
   openalex_id: "by OpenAlex ID",
   title_search: "by title",
   semantic_search: "by meaning",
