@@ -6,19 +6,13 @@
   padding-bottom: 12px; margin-bottom: 16px;
   border-bottom: 1px solid var(--oa-border-subtle);
 }
-.brand-home { display: inline-flex; align-items: center; color: var(--oa-text); }
-.brand-home:hover { text-decoration: none; }
-.brand-mark { height: 22px; width: auto; display: block; }
-.brand-word {
-  font-family: var(--oa-font-brand); font-size: 1.5rem; font-weight: 500; line-height: 1.2;
-  padding-left: 0.15em; color: var(--oa-text);
-}
 .brand-cat {
   font-size: 0.75rem; font-weight: 500; line-height: 1rem;
   padding: 3px 9px; border-radius: 9999px;
   background: var(--oa-cat-light); color: var(--oa-cat-dark);
 }
 .brand-note { margin-left: auto; font-size: 0.75rem; color: var(--oa-text-muted); text-align: right; }
+.brand-note a { color: inherit; text-decoration: underline; }
 
 /* ---------- Card ---------- */
 .card {

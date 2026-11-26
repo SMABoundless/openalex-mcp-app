@@ -1,5 +1,3 @@
-import markUrl from "../assets/openalex-mark.png";
-
 /** The kinds of record OpenAlex colour-codes. Each view shows one. */
 export type Category = "works" | "authors" | "institutions" | "sources" | "topics" | "funders";
 
@@ -26,19 +24,19 @@ export function categoryOf(toolName: string): { category: Category; label: strin
 }
 
 /**
- * The strip at the top of every view. The mark and wordmark are OpenAlex's;
- * the note says plainly that this app is not theirs.
+ * The strip at the top of every view: the kind of record shown, and where the
+ * data comes from. It deliberately carries no logo or symbol, and no OpenAlex
+ * wordmark, so the app is not mistaken for theirs.
  */
 export function BrandBar({ toolName }: { toolName: string }) {
   const { label } = categoryOf(toolName);
   return (
     <header class="brand-bar">
-      <a class="brand-home" href="https://openalex.org" target="_blank" rel="noopener noreferrer" aria-label="OpenAlex website">
-        <img class="brand-mark" src={markUrl} alt="" />
-        <span class="brand-word">OpenAlex</span>
-      </a>
       <span class="brand-cat">{label}</span>
-      <span class="brand-note">Unofficial app · data from OpenAlex</span>
+      <span class="brand-note">
+        Unofficial app · data from{" "}
+        <a href="https://openalex.org" target="_blank" rel="noopener noreferrer">OpenAlex</a>
+      </span>
     </header>
   );
 }

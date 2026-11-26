@@ -142,10 +142,10 @@ Besides OpenAlex (`api.openalex.org`, and `content.openalex.org` for stored text
 
 ## Visual style
 
-The views are styled after [openalex.org](https://openalex.org): its colours, type sizes, radii and shadows (the site's own `--ox-*` design tokens), its three fonts, and its category colours for works, authors, sources, institutions and topics. A dark variant is added for hosts in dark mode; the OpenAlex site itself is light only.
+The views are styled after [openalex.org](https://openalex.org): its colours, type sizes, radii and shadows (the site's own `--ox-*` design tokens), its text and code fonts, and its category colours for works, authors, sources, institutions and topics. A dark variant is added for hosts in dark mode; the OpenAlex site itself is light only.
 
-- **Fonts:** Inter, JetBrains Mono and Dosis, each under the SIL Open Font License. Small subsets are bundled into every view, because views run in a sandboxed frame that cannot load fonts from the network. The licences are in `ui/shared/fonts/`.
-- **Logo:** the OpenAlex mark and wordmark appear at the top of each view, linked to openalex.org, beside the words "Unofficial app · data from OpenAlex". The mark belongs to OpenAlex (OurResearch). This project is not affiliated with or endorsed by them. If you publish or distribute a copy, check with OpenAlex that they are happy with this use of their logo, or remove it in `ui/shared/components/BrandBar.tsx`.
+- **Fonts:** Inter and JetBrains Mono, both under the SIL Open Font License. Small subsets are bundled into every view, because views run in a sandboxed frame that cannot load fonts from the network. The licences are in `ui/shared/fonts/`.
+- **No OpenAlex logo:** the views do not use OpenAlex's mark or wordmark. Each view opens with a chip naming the kind of record shown and the words "Unofficial app · data from OpenAlex". This project is not affiliated with or endorsed by OpenAlex (OurResearch).
 
 ## How results are returned
 
