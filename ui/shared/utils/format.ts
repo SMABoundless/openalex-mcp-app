@@ -29,3 +29,13 @@ export function doiUrl(doi: string): string {
 export function shortId(id: string): string {
   return id.replace("https://openalex.org/", "");
 }
+
+/**
+ * A LibKey link for a DOI: full text through the reader's own library, or an
+ * open copy. Null without a usable DOI. Mirrors libkeyUrl in the server's
+ * format-utils; the link carries no library ID, so each reader gets their own.
+ */
+export function libkeyUrl(doi: string | null | undefined): string | null {
+  const bare = (doi ?? "").trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
+  return /^10\.\d{4,9}\/\S+$/.test(bare) ? `https://libkey.io/${bare}` : null;
+}

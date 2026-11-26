@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
-import { AuthorSearchInputSchema, AuthorIdSchema, PaginationSchema, WorkSortSchema, FilterSchema, CursorSchema } from "../schemas/common.js";
-import { AUTHOR_LIST_FIELDS, WORK_LIST_FIELDS } from "../constants.js";
+import { AuthorSearchInputSchema, AuthorIdSchema, PaginationSchema, WorkSortSchema, FilterSchema, CursorSchema, DetailSchema } from "../schemas/common.js";
+import { AUTHOR_LIST_FIELDS } from "../constants.js";
 import { openalexRequest, getEntity, extractPagination, queryOql } from "../services/openalex-client.js";
 import {
   formatWorkJson,
@@ -14,7 +14,8 @@ import {
   firstIndex,
   toolResult,
   toolError,
-  READ_ONLY_ANNOTATIONS
+  READ_ONLY_ANNOTATIONS,
+  workListShape
 } from "../services/format-utils.js";
 import type { Author, Work, OpenAlexListResponse } from "../types.js";
 import type { SearchAuthorsOutput, AuthorWorksOutput } from "../output-types.js";
@@ -124,11 +125,13 @@ Returns: List of works by the author.`,
       limit: PaginationSchema.shape.limit,
       page: PaginationSchema.shape.page,
       cursor: CursorSchema,
+      detail: DetailSchema,
     },
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/get-author-works.html" } },
-  }, async ({ id, filter, sort, limit, page, cursor }) => {
+  }, async ({ id, filter, sort, limit, page, cursor, detail }) => {
     try {
+      const shape = workListShape(detail);
       const author = await getEntity<Author>("authors", id, "id,display_name,works_count");
       const authorFilter = `authorships.author.id:${author.id}`;
       const data = await openalexRequest<OpenAlexListResponse<Work>>({
@@ -138,10 +141,10 @@ Returns: List of works by the author.`,
         perPage: limit,
         page,
         cursor,
-        select: WORK_LIST_FIELDS,
+        select: shape.select,
       });
       const pagination = extractPagination(data.meta, data.results.length, Boolean(cursor));
-      const works = data.results.map(w => formatWorkJson(w, { compact: true }));
+      const works = data.results.map(w => formatWorkJson(w, shape.options));
       const output: AuthorWorksOutput = {
         author: { id: author.id, name: author.display_name, total_works: author.works_count ?? 0 },
         pagination,

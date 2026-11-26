@@ -41,6 +41,8 @@ All tools are read-only.
 
 List tools return 10 results by default (up to 100 with `limit`). Use `page` for the first 10,000 results, or `cursor` to go further on the tools that list works. Semantic search returns at most 50 results and accepts only some filters; the tool description lists them.
 
+Tools that list works take `detail: "brief"`, which leaves out abstracts and topics and returns about half the text. Use it when titles, authors, dates and IDs are enough.
+
 `openalex_search_works` can re-rank its results: with `rerank: true`, OpenAlex reorders the best 100 keyword matches by how well each answers the query. It is off by default because it doubles the cost of a search ($0.002 instead of $0.001).
 
 Tools that search or count works end with the query written in OQL, OpenAlex's query language. Paste it into the OQL tab at openalex.org to rerun the search or export the full results.
@@ -134,6 +136,12 @@ Requests without the right secret get a 401. `/health` stays open so the host ca
 | `MCP_AUTH_TOKEN` | Shared secret required on `/mcp` when using the HTTP transport | none (open) |
 | `TRANSPORT` | `stdio` or `http` | `stdio` |
 | `PORT` | Port for the HTTP transport | `3000` |
+
+## Links, full text and copying
+
+- **Links open through the host.** Views run in a sandboxed frame, so a click on any link is handed to the host application to open. If the host refuses, the view shows the address with a copy button.
+- **Full text.** Each work with a DOI has a "Full text" link to [LibKey](https://libkey.io), which sends the reader to a copy through their own library, or to an open access copy. It is a plain link: nothing is loaded or sent until someone clicks it, and no library is named in it.
+- **Copy buttons** on queries, DOIs and IDs. The server declares the `clipboardWrite` permission the sandbox requires; where a host withholds it, the button reports that the copy failed.
 
 ## Other services contacted
 

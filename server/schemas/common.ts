@@ -113,6 +113,13 @@ export const SearchModeSchema = z.enum(["keyword", "semantic"])
     "returns at most 50 results, cannot be sorted or paged, and accepts only some filters."
   );
 
+export const DetailSchema = z.enum(["full", "brief"])
+  .default("full")
+  .describe(
+    "full: each work with a shortened abstract and its topics (default). " +
+    "brief: no abstracts or topics, about half the size; use it when titles, authors, dates and IDs are enough."
+  );
+
 export const RerankSchema = z.boolean()
   .default(false)
   .describe(
@@ -124,6 +131,7 @@ export const WorkSearchInputSchema = {
   query: SearchQuerySchema,
   mode: SearchModeSchema,
   rerank: RerankSchema,
+  detail: DetailSchema,
   filter: FilterSchema,
   sort: WorkSortSchema,
   limit: PaginationSchema.shape.limit,
@@ -273,6 +281,7 @@ export const QueryInputSchema = {
     .default(25)
     .describe(`Rows to return: results for a list, groups for a table (1-${MAX_PER_PAGE}, default: 25)`),
   page: PaginationSchema.shape.page,
+  detail: DetailSchema,
 };
 
 // ============================================

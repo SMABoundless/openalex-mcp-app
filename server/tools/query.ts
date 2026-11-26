@@ -1,11 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { QueryInputSchema } from "../schemas/common.js";
-import { WORK_LIST_FIELDS } from "../constants.js";
 import { openalexPost, extractPagination, OpenAlexError } from "../services/openalex-client.js";
 import {
   formatWorkJson,
   workListEntry,
+  workListShape,
   listText,
   pageSummary,
   num,
@@ -87,6 +87,7 @@ Args:
   - oql (string): The query
   - limit (number): Results for a list, or groups for a table (1-100, default: 25)
   - page (number): Page number (default: 1)
+  - detail (string): For lists of works, "full" (default) or "brief", which leaves out abstracts and topics
 
 Returns: For a list, the records. For a table, one row per group with each number, plus the same numbers for the whole set. The query is echoed back as OpenAlex understood it.
 
@@ -96,7 +97,7 @@ OQL is under active development at OpenAlex, so syntax can change. Trust the err
     inputSchema: QueryInputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/query.html" } },
-  }, async ({ oql, limit, page }) => {
+  }, async ({ oql, limit, page, detail }) => {
     try {
       // Checking first is free. It rejects a bad query with a hint, and says
       // what kind of thing the query returns, which decides the fields to ask for.
@@ -111,7 +112,8 @@ OQL is under active development at OpenAlex, so syntax can change. Trust the err
 
       const entity = check.oqo?.get_rows ?? "works";
       const looksLikeTable = Boolean(check.oqo?.calculate?.length || check.oqo?.group_by?.length);
-      const select = looksLikeTable ? null : entity === "works" ? WORK_LIST_FIELDS : ENTITY_LIST_FIELDS;
+      const shape = workListShape(detail);
+      const select = looksLikeTable ? null : entity === "works" ? shape.select : ENTITY_LIST_FIELDS;
       const data = await run(oql, limit, page, select);
 
       const echoed = data.meta?.x_query?.oql ?? check.oql_oneline ?? check.oql ?? oql;
@@ -135,7 +137,7 @@ OQL is under active development at OpenAlex, so syntax can change. Trust the err
       const pagination = extractPagination(data.meta as unknown as OpenAlexMeta, results.length);
       const start = (page - 1) * limit;
       if (entity === "works") {
-        const works = (results as unknown as Work[]).map(w => formatWorkJson(w, { compact: true }));
+        const works = (results as unknown as Work[]).map(w => formatWorkJson(w, shape.options));
         const output: QueryOutput = { ...base, kind: "works", pagination, works, entities: [], table: null };
         const text = listText({
           heading: "Query result: works",

@@ -1,4 +1,4 @@
-import { ABSTRACT_SNIPPET_LENGTH, CHARACTER_LIMIT, LIST_AUTHORS } from "../constants.js";
+import { ABSTRACT_SNIPPET_LENGTH, CHARACTER_LIMIT, LIST_AUTHORS, WORK_LIST_FIELDS, WORK_BRIEF_FIELDS } from "../constants.js";
 import type { Author, Institution, Work, CountByYear } from "../types.js";
 import type {
   AuthorOutput,
@@ -70,11 +70,16 @@ export function topicCounts(
  * `compact` is used for result lists: fewer authors, no affiliations, and a
  * shortened abstract.
  */
-export function formatWorkJson(work: Work, options: { compact?: boolean } = {}): WorkOutput {
+/**
+ * `compact` is used for result lists: first few authors, shortened abstract.
+ * `brief` goes further and leaves out the abstract and topics.
+ */
+export function formatWorkJson(work: Work, options: { compact?: boolean; brief?: boolean } = {}): WorkOutput {
   const compact = options.compact ?? false;
+  const brief = options.brief ?? false;
   const authorships = work.authorships ?? [];
   const shown = compact ? authorships.slice(0, LIST_AUTHORS) : authorships;
-  const fullAbstract = reconstructAbstract(work.abstract_inverted_index);
+  const fullAbstract = brief ? null : reconstructAbstract(work.abstract_inverted_index);
   const abstract = fullAbstract && compact ? snippet(fullAbstract, ABSTRACT_SNIPPET_LENGTH) : fullAbstract;
   const source = work.primary_location?.source;
 
@@ -113,7 +118,7 @@ export function formatWorkJson(work: Work, options: { compact?: boolean } = {}):
     },
     abstract,
     abstract_truncated: Boolean(fullAbstract && abstract !== fullAbstract),
-    topics: (work.topics ?? []).slice(0, 5).map(t => ({
+    topics: (brief ? [] : work.topics ?? []).slice(0, 5).map(t => ({
       name: t.display_name,
       id: t.id,
       score: t.score ?? null
@@ -173,6 +178,8 @@ export function workDetailMarkdown(w: WorkOutput): string {
       : "**Open access:** no"
   );
   if (w.doi) lines.push(`**DOI:** ${w.doi}`);
+  const libkey = libkeyUrl(w.doi);
+  if (libkey) lines.push(`**Full text via the reader's library (LibKey):** ${libkey}`);
   lines.push(`**OpenAlex ID:** ${shortId(w.id)}`);
   if (w.topics.length > 0) lines.push(`**Topics:** ${w.topics.map(t => t.name).join(", ")}`);
   if (w.abstract) lines.push("", `**Abstract:** ${w.abstract}`);
@@ -379,6 +386,18 @@ export function rerankNote(options: {
   if (options.semantic) return "Re-ranking was not applied: semantic search already orders results by meaning.";
   if (!options.relevanceOrder) return "Re-ranking was not applied: it only works in relevance order, and another sort was chosen.";
   return "Re-ranking was not applied: it covers only the best 100 matches, and this page is past them.";
+}
+
+/** The fields to request and the formatter options for a list of works at the chosen level of detail. */
+export function workListShape(detail: "full" | "brief" | undefined): { select: string; options: { compact: true; brief: boolean } } {
+  const brief = detail === "brief";
+  return { select: brief ? WORK_BRIEF_FIELDS : WORK_LIST_FIELDS, options: { compact: true, brief } };
+}
+
+/** A LibKey link for a DOI: full text through the reader's own library, or an open copy. Null without a DOI. */
+export function libkeyUrl(doi: string | null | undefined): string | null {
+  const bare = (doi ?? "").trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
+  return /^10\.\d{4,9}\/\S+$/.test(bare) ? `https://libkey.io/${bare}` : null;
 }
 
 /** One line giving a result's query in OQL and what it is for. */
