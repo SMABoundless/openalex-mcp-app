@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { MAX_PER_PAGE, DEFAULT_PER_PAGE, MAX_REFERENCES, MAX_REVIEWS, MAX_PAID_REVIEW_TEXTS, WORK_TYPES } from "../constants.js";
+import {
+  MAX_PER_PAGE, DEFAULT_PER_PAGE, MAX_REFERENCES, MAX_REVIEWS, MAX_PAID_REVIEW_TEXTS, WORK_TYPES,
+  EXPORT_DEFAULT_RECORDS, EXPORT_MAX_RECORDS
+} from "../constants.js";
 
 // ============================================
 // Common Parameter Schemas
@@ -219,6 +222,29 @@ export const ResolveReferencesInputSchema = {
       `The references to check, one per item (1-${MAX_REFERENCES}). Each can be a DOI, a PMID, a PMCID, an OpenAlex ID, ` +
       "or a citation in any style. A citation that contains a DOI is looked up by that DOI."
     ),
+};
+
+// ============================================
+// Export
+// ============================================
+
+export const ExportWorksInputSchema = {
+  format: z.enum(["ris", "bibtex", "csv"]).default("ris").describe(
+    "ris: for Zotero, EndNote, Covidence, Rayyan (default). bibtex: for LaTeX. csv: for a spreadsheet."
+  ),
+  ids: z.array(z.string().min(1).max(300)).max(EXPORT_MAX_RECORDS).optional().describe(
+    "Works to export, by OpenAlex ID, DOI, PMID or PMCID. Use this or a search (query and/or filter), not both."
+  ),
+  query: z.string().min(1).max(2000).optional().describe("Keyword search choosing the works to export"),
+  filter: FilterSchema,
+  sort: WorkSortSchema,
+  max_records: z.number().int().min(1).max(EXPORT_MAX_RECORDS).default(EXPORT_DEFAULT_RECORDS).describe(
+    `Most records to put in the file when exporting a search (1-${EXPORT_MAX_RECORDS}, default: ${EXPORT_DEFAULT_RECORDS})`
+  ),
+  abstracts: z.boolean().default(true).describe("Include abstracts. Screening tools need them; leave them out for a smaller file."),
+  include_file: z.boolean().optional().describe(
+    "Whether to return the file's text in the reply as well as to the view. Left unset, a small file is included and a large one is not."
+  ),
 };
 
 // ============================================

@@ -12,6 +12,11 @@ export interface ShellContext {
   navigate?: (changes: Record<string, unknown>) => void;
   /** True while another page is being fetched. */
   busy: boolean;
+  /**
+   * Hands a text file to the host to save. Resolves false when the host
+   * refuses, the user cancels, or the host has no download support.
+   */
+  download: (file: { filename: string; mimeType: string; text: string }) => Promise<boolean>;
 }
 
 interface AppShellProps<T> {
@@ -77,6 +82,17 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
     }
   };
 
+  const download = async (file: { filename: string; mimeType: string; text: string }): Promise<boolean> => {
+    try {
+      const result = await app.downloadFile({
+        contents: [{ type: "resource", resource: { uri: `file:///${file.filename}`, mimeType: file.mimeType, text: file.text } }],
+      });
+      return !result.isError;
+    } catch {
+      return false;
+    }
+  };
+
   const navigate = async (changes: Record<string, unknown>) => {
     if (busy) return;
     setBusy(true);
@@ -120,7 +136,7 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
           <CopyButton text={blockedLink} />
         </div>
       )}
-      {children(data, { navigate: canCallTools ? navigate : undefined, busy })}
+      {children(data, { navigate: canCallTools ? navigate : undefined, busy, download })}
     </div>
   );
 }

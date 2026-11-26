@@ -120,6 +120,7 @@ export interface Work {
   keywords?: Keyword[];
   
   is_retracted?: boolean;
+  language?: string | null;
 
   // Related works
   related_works: string[];

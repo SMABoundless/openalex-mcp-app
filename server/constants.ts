@@ -108,6 +108,12 @@ export const REVIEW_TEXT_BUDGET = 40000;
 export const MAX_KEYWORDS = 30;
 export const KEYWORD_TOP_TITLES = 3;
 
+// openalex_export_works: records per file, by default and at most
+export const EXPORT_DEFAULT_RECORDS = 100;
+export const EXPORT_MAX_RECORDS = 500;
+// A file up to this many characters is also given to the model as text
+export const EXPORT_TEXT_LIMIT = 20000;
+
 // OpenAlex entity prefixes for ID resolution
 export const OPENALEX_PREFIXES = {
   work: "W",

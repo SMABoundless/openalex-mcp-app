@@ -536,3 +536,29 @@ export interface KeywordSearchOutput {
   sample: WorkOutput[];
   oql: string;
 }
+
+// ---------- Export ----------
+
+export interface ExportWorksOutput {
+  format: "ris" | "bibtex" | "csv";
+  filename: string;
+  mime_type: string;
+  // The file itself
+  content: string;
+  // Records in the file
+  records: number;
+  // Works matching the search; null when exporting a list of identifiers
+  matched: number | null;
+  // True when the search matched more works than the file holds
+  truncated: boolean;
+  duplicates_removed: number;
+  // OpenAlex IDs dropped as duplicates
+  removed_ids: string[];
+  // Identifiers given that were not found, or not recognised
+  not_found: string[];
+  // The search as a query, when there was one
+  oql: string | null;
+  // When the export was made, as an ISO date and time
+  exported_at: string;
+  abstracts: boolean;
+}

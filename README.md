@@ -2,7 +2,7 @@
 
 An MCP server for [OpenAlex](https://openalex.org), the open catalog of scholarly works, authors, institutions, journals, publishers and funders, with interactive views for hosts that support [MCP Apps](https://modelcontextprotocol.io).
 
-Ask your assistant to search the literature, look up a paper, follow its citations, find related work, profile an author, institution, journal, publisher, funder or subject, count works by year, author, publisher, open access status and more, get a one-call overview of a set of works, check a reference list for works that don't exist or have been retracted, read a paper's open peer reviews, build a thorough search from words and OpenAlex keywords, or run a query written in OpenAlex's own query language. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
+Ask your assistant to search the literature, look up a paper, follow its citations, find related work, profile an author, institution, journal, publisher, funder or subject, count works by year, author, publisher, open access status and more, get a one-call overview of a set of works, check a reference list for works that don't exist or have been retracted, read a paper's open peer reviews, export results to Zotero or a screening tool, build a thorough search from words and OpenAlex keywords, or run a query written in OpenAlex's own query language. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
 
 > OpenAlex also publishes its own official connector for Claude (`https://mcp.openalex.org/mcp`, listed as **OpenAlex** in Claude's connector directory). Each person signs in to it with their own OpenAlex account and budget, and it can correct your own author profile, which this project cannot. This project's difference is the visual views and that you host it yourself.
 
@@ -36,6 +36,7 @@ Ask your assistant to search the literature, look up a paper, follow its citatio
 | `openalex_query` | Run a query written in OQL, OpenAlex's query language: several numbers at once, two-way breakdowns, thresholds, and lists of authors, institutions, publishers or funders |
 | `openalex_find_keywords` | Find the OpenAlex keywords that fit a topic, from key phrases or a description, with each keyword's most cited works |
 | `openalex_keyword_search` | Thorough search in parts: each part matches on its words or on chosen keywords. Reports what each piece contributes and returns a random sample |
+| `openalex_export_works` | Export works as RIS, BibTeX or CSV, from a list of IDs or a search, with duplicates removed |
 
 All tools are read-only.
 
@@ -64,6 +65,8 @@ Two tools make several requests per call:
 `openalex_get_reviews` costs $0.0002 to list a work's reviews. Review text from eLife and Review Commons is fetched from those publishers and is free. Setting `paid_text` also downloads the full text OpenAlex stores for reviews from other publishers, at $0.01 each and at most 5 per call. That stored text is unreliable: in testing it was the review itself in one download of four, and otherwise the reviewed article or an empty file. The tool discards text that is not the review, but the charge still applies.
 
 `openalex_find_keywords` costs $0.001 per phrase and about $0.0001 per keyword returned; giving it a description adds $0.01. `openalex_keyword_search` makes up to 3 requests per part plus 3, around 1 cent for a two-part search.
+
+`openalex_export_works` costs about $0.0001 per 100 records, or $0.001 per 100 with a keyword query.
 
 `openalex_query` costs the same as the equivalent search. A query OpenAlex refuses is free, and the error says how to fix it. OQL is under active development at OpenAlex, so its syntax can change.
 
@@ -143,6 +146,16 @@ Requests without the right secret get a 401. `/health` stays open so the host ca
 - **Full text.** Each work with a DOI has a "Full text" link to [LibKey](https://libkey.io), which sends the reader to a copy through their own library, or to an open access copy. It is a plain link: nothing is loaded or sent until someone clicks it, and no library is named in it.
 - **Copy buttons** on queries, DOIs and IDs. The server declares the `clipboardWrite` permission the sandbox requires; where a host withholds it, the button reports that the copy failed.
 
+## Exporting
+
+`openalex_export_works` writes a file of up to 500 works as RIS (Zotero, EndNote, Mendeley, Covidence, Rayyan), BibTeX or CSV. Choose the works by a list of OpenAlex IDs, DOIs, PMIDs or PMCIDs, or by a search. A filter can name a set by its relation to a work, such as `cited_by:W2741809807` for a paper's reference list or `cites:W2741809807` for the works citing it.
+
+- The view offers the file for download through the host, and a button to copy its text. A file under 20,000 characters is also returned as text, for clients without views.
+- Repeats are removed by DOI, then OpenAlex ID, and listed. A preprint and its published version are separate OpenAlex records with different DOIs, so both are kept.
+- Author names arrive from OpenAlex as one string and are turned into "Surname, Given" by rule (the last word, plus lower-case particles such as "van der"). That is wrong for some names, for example those written family name first.
+- OpenAlex's machine-assigned keywords are not exported as keywords, so they are not mistaken for the authors' own.
+- The counts cover identification only. Screening and inclusion numbers for a PRISMA diagram come from the screening tool.
+
 ## Other services contacted
 
 Besides OpenAlex (`api.openalex.org`, and `content.openalex.org` for stored text), the server contacts three hosts, only from `openalex_get_reviews` with `include_text`, and sends them nothing but a review's DOI:
@@ -176,10 +189,10 @@ npm test             # run the tests
 
 Layout:
 
-- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts`, `services/format-analysis.ts` and `services/format-query.ts` shape results, `services/references.ts` matches citations to works, `services/keywords.ts` builds keyword searches, and `services/review-text.ts` fetches review text.
+- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts`, `services/format-analysis.ts` and `services/format-query.ts` shape results, `services/references.ts` matches citations to works, `services/export.ts` writes RIS, BibTeX and CSV, `services/keywords.ts` builds keyword searches, and `services/review-text.ts` fetches review text.
 - `server/output-types.ts` — the shape of each tool's structured data. The server and the views both import it, so a renamed field fails the build.
 - `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`. `ui/shared/styles/base.css` holds the design tokens.
-- `test/` — tests for ID handling, pagination, formatting, the set summary, citation matching, keyword searches, review text and query results. They do not call the API.
+- `test/` — tests for ID handling, pagination, formatting, the set summary, citation matching, keyword searches, export formats, review text and query results. They do not call the API.
 
 ## License
 
