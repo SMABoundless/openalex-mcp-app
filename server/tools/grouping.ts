@@ -1,8 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { GroupWorksInputSchema } from "../schemas/common.js";
-import { openalexRequest } from "../services/openalex-client.js";
-import { num, toolResult, toolError, READ_ONLY_ANNOTATIONS } from "../services/format-utils.js";
+import { openalexRequest, queryOql } from "../services/openalex-client.js";
+import { num, oqlLine, toolResult, toolError, READ_ONLY_ANNOTATIONS } from "../services/format-utils.js";
 import { formatGroups, groupsAreYears, groupsAreBoolean, groupLine, resolveGroupBy } from "../services/format-entities.js";
 import type { OpenAlexGroupResponse } from "../types.js";
 import type { GroupWorksOutput } from "../output-types.js";
@@ -76,6 +76,7 @@ Examples:
         groups,
         more_groups: moreGroups,
         ...(withoutValue > 0 ? { works_without_value: withoutValue } : {}),
+        oql: queryOql(data.meta),
       };
 
       const scope = [query ? `matching "${query}"` : null, filter ? `with filter "${filter}"` : null]
@@ -96,6 +97,7 @@ Examples:
       if (moreGroups) {
         lines.push("", `Only the ${groups.length} largest groups are shown${limit < 100 ? "; raise limit (up to 100) to see more" : ""}.`);
       }
+      if (output.oql) lines.push("", oqlLine(output.oql));
       return toolResult(lines.join("\n"), output);
     } catch (error) {
       return toolError("grouping works", error);

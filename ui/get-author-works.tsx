@@ -27,7 +27,7 @@ function GetAuthorWorksView() {
                 <BarChart data={chartData} />
               </section>
             )}
-            <WorkList works={data.works} pagination={data.pagination} ctx={ctx} emptyMessage="No works found." />
+            <WorkList oql={data.oql} works={data.works} pagination={data.pagination} ctx={ctx} emptyMessage="No works found." />
           </div>
         );
       }}

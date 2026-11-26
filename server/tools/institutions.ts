@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { InstitutionSearchInputSchema, InstitutionIdSchema, PaginationSchema, WorkSortSchema, FilterSchema, CursorSchema } from "../schemas/common.js";
 import { INSTITUTION_LIST_FIELDS, WORK_LIST_FIELDS } from "../constants.js";
-import { openalexRequest, getEntity, extractPagination } from "../services/openalex-client.js";
+import { openalexRequest, getEntity, extractPagination, queryOql } from "../services/openalex-client.js";
 import {
   formatWorkJson,
   formatInstitutionJson,
@@ -147,6 +147,7 @@ Returns: List of works from the institution.`,
         institution: { id: institution.id, name: institution.display_name, total_works: institution.works_count ?? 0 },
         pagination,
         works,
+        oql: queryOql(data.meta),
       };
       const start = firstIndex(page, limit, cursor);
       const text = listText({
@@ -155,6 +156,7 @@ Returns: List of works from the institution.`,
         entries: works.map((w, i) => workListEntry(w, start + i + 1)),
         pagination,
         emptyMessage: `No works found for ${institution.display_name}${filter ? ` with filter "${filter}"` : ""}.`,
+        oql: output.oql,
       });
       return toolResult(text, output);
     } catch (error) {

@@ -305,3 +305,24 @@
 .status-bad { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 .reference-input { margin-top: 8px; overflow-wrap: anywhere; }
 .reference-work { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--oa-border); }
+
+/* The query behind a result */
+.query-note { margin-top: 16px; font-size: 0.82rem; color: var(--oa-text-secondary); }
+.query-note summary { cursor: pointer; }
+.query-note code {
+  display: block; margin: 8px 0 4px; padding: 8px 10px; border: 1px solid var(--oa-border); border-radius: var(--oa-radius);
+  background: var(--oa-bg-secondary); color: var(--oa-text); font-family: var(--oa-font-mono); overflow-wrap: anywhere; white-space: pre-wrap;
+}
+
+/* Query results */
+.query-echo { font-family: var(--oa-font-mono); font-size: 0.8rem; overflow-wrap: anywhere; }
+.results-table .summary-row td { font-weight: 600; border-bottom: 2px solid var(--oa-border); }
+.results-table .sub-row td { font-size: 0.85rem; color: var(--oa-text-secondary); }
+
+/* Review text */
+.review-text { margin-top: 10px; font-size: 0.85rem; }
+.review-text summary { cursor: pointer; color: var(--oa-accent); }
+.review-body {
+  margin-top: 8px; padding: 10px 12px; border-left: 3px solid var(--oa-border); background: var(--oa-bg-secondary);
+  white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; overflow-y: auto;
+}

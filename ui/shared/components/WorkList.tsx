@@ -2,6 +2,7 @@ import type { PaginationInfo, WorkOutput } from "../../../server/output-types";
 import type { ShellContext } from "./AppShell";
 import { WorkCard } from "./WorkCard";
 import { Pagination } from "./Pagination";
+import { QueryNote } from "./QueryNote";
 
 interface WorkListProps {
   works: WorkOutput[];
@@ -9,10 +10,12 @@ interface WorkListProps {
   ctx: ShellContext;
   emptyMessage: string;
   numbered?: boolean;
+  /** The query behind the list, shown under the pager when given */
+  oql?: string | null;
 }
 
 /** A page of work cards followed by the pager. Shared by every view that lists works. */
-export function WorkList({ works, pagination, ctx, emptyMessage, numbered }: WorkListProps) {
+export function WorkList({ works, pagination, ctx, emptyMessage, numbered, oql }: WorkListProps) {
   if (works.length === 0) {
     return (
       <div class="empty-state">
@@ -39,6 +42,7 @@ export function WorkList({ works, pagination, ctx, emptyMessage, numbered }: Wor
         </div>
       )}
       <Pagination pagination={pagination} onNavigate={ctx.navigate} busy={ctx.busy} />
+      <QueryNote oql={oql} />
     </>
   );
 }

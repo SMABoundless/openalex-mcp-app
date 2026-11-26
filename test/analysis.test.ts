@@ -5,7 +5,8 @@ import {
   internationalShare,
   yesShare,
   buildAnalysis,
-  analysisMarkdown
+  analysisMarkdown,
+  citationStats
 } from "../server/services/format-analysis.js";
 import type { OpenAlexGroupResponse, Work } from "../server/types.js";
 
@@ -63,7 +64,9 @@ test("buildAnalysis assembles totals, shares and rankings, and names what is mis
   assert.deepEqual(a.top_authors.map(g => g.name), ["Ada Example", "Bo Example", "Cy Example"]);
   assert.equal(a.top_authors[0].share, 0.09);
   assert.equal(a.most_cited[0].title, "A Much Cited Paper");
-  assert.deepEqual(a.unavailable, ["types", "fields", "topics", "institutions", "countries", "journals and sources", "funders"]);
+  assert.deepEqual(a.unavailable, ["types", "fields", "topics", "institutions", "countries", "journals and sources", "funders", "citation totals"]);
+  assert.equal(a.citations, null);
+  assert.equal(a.oql, null);
 });
 
 test("the summary text reports the headline figures and leaves abstracts out", () => {
@@ -84,4 +87,26 @@ test("buildAnalysis reports most cited works as missing only when they were not 
   assert.ok(without.unavailable.includes("most cited works"));
   const empty = buildAnalysis({ groups: parts.groups, mostCited: [] }, { top: 3 });
   assert.ok(!empty.unavailable.includes("most cited works"));
+});
+
+test("citationStats reads the whole-set row and tolerates missing numbers", () => {
+  assert.deepEqual(
+    citationStats({ count: 100, sum_cited_by_count: 480, mean_cited_by_count: 4.8, median_cited_by_count: 1.1, mean_fwci: 1.66 }),
+    { total: 480, mean: 4.8, median: 1.1, mean_fwci: 1.66 }
+  );
+  assert.deepEqual(citationStats({ sum_cited_by_count: 0, mean_fwci: null }), { total: 0, mean: null, median: null, mean_fwci: null });
+  assert.equal(citationStats({ count: 5 }), undefined);
+  assert.equal(citationStats(undefined), undefined);
+});
+
+test("the summary text reports citation totals and the query when they are available", () => {
+  const a = buildAnalysis(
+    { ...parts, citations: { total: 101590, mean: 4.8001, median: 1.1289, mean_fwci: 1.6618 }, oql: "get works from 2024, most cited first" },
+    { top: 3, thisYear: 2026 }
+  );
+  assert.ok(!a.unavailable.includes("citation totals"));
+  const text = analysisMarkdown(a);
+  assert.match(text, /\*\*Citations:\*\* 101,590 in total \(mean 4\.8, median 1\.1 per work\)/);
+  assert.match(text, /\*\*Field-weighted citation impact:\*\* 1\.66 on average/);
+  assert.match(text, /Query in OQL \(paste into the OQL tab at openalex\.org to rerun or export it\): get works from 2024, most cited first$/);
 });

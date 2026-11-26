@@ -1,5 +1,6 @@
 import {
   API_BASE_URL,
+  CONTENT_BASE_URL,
   API_KEY_URL,
   OPENALEX_API_KEY,
   DEFAULT_PER_PAGE,
@@ -61,13 +62,22 @@ export function budgetNotice(): string {
 // ============================================
 
 export class OpenAlexError extends Error {
-  constructor(message: string, readonly status: number) {
+  /**
+   * @param body The start of the response body, kept so a caller can read a
+   *   structured error such as the query language's validation messages.
+   */
+  constructor(message: string, readonly status: number, readonly body: string = "") {
     super(message);
     this.name = "OpenAlexError";
   }
 }
 
 function buildError(status: number, body: string, budget: Budget | null): OpenAlexError {
+  const error = describeError(status, body, budget);
+  return new OpenAlexError(error.message, status, body.slice(0, 8000));
+}
+
+function describeError(status: number, body: string, budget: Budget | null): OpenAlexError {
   const detail = body.replace(/\s+/g, " ").trim().slice(0, 300);
   const budgetText = budget ? ` (${describeBudget(budget)})` : "";
 
@@ -141,15 +151,27 @@ export async function openalexRequest<T>(options: RequestOptions): Promise<T> {
     }
   }
 
+  const response = await send(url);
+  return response.json() as Promise<T>;
+}
+
+/**
+ * Sends a request to OpenAlex, with the retry, budget tracking and error
+ * handling every call shares. Resolves only with a successful response.
+ */
+async function send(url: URL, init: { method?: "GET" | "POST"; body?: string } = {}): Promise<Response> {
   // Short bursts can trip the per-second limit; those are worth a brief retry.
   // A spent daily budget is not, so it fails immediately.
   for (let attempt = 0; ; attempt++) {
     let response: Response;
     try {
       response = await fetch(url, {
+        method: init.method ?? "GET",
+        body: init.body,
         headers: {
           "Accept": "application/json",
-          "User-Agent": "openalex-mcp-app/1.0.0"
+          "User-Agent": "openalex-mcp-app/1.0.0",
+          ...(init.body != null ? { "Content-Type": "application/json" } : {})
         }
       });
     } catch {
@@ -161,9 +183,7 @@ export async function openalexRequest<T>(options: RequestOptions): Promise<T> {
     const budget = readBudget(response.headers);
     if (budget) lastBudget = budget;
 
-    if (response.ok) {
-      return response.json() as Promise<T>;
-    }
+    if (response.ok) return response;
 
     const budgetSpent = budget != null && budget.remainingUsd <= 0;
     if (response.status === 429 && !budgetSpent && attempt < MAX_RETRIES) {
@@ -177,6 +197,34 @@ export async function openalexRequest<T>(options: RequestOptions): Promise<T> {
     const errorText = await response.text().catch(() => "");
     throw buildError(response.status, errorText, budget);
   }
+}
+
+/**
+ * POST a JSON body to the API. `path` is "" for the root, which runs a query
+ * written in OQL, or "query", which checks one without running it.
+ */
+export async function openalexPost<T>(path: "" | "query", body: Record<string, unknown>): Promise<T> {
+  const url = new URL(`${API_BASE_URL}/${path}`);
+  if (OPENALEX_API_KEY) url.searchParams.set("api_key", OPENALEX_API_KEY);
+  const response = await send(url, { method: "POST", body: JSON.stringify(body) });
+  return response.json() as Promise<T>;
+}
+
+/**
+ * Download the full text OpenAlex stores for a work, as TEI XML.
+ * Each download is charged ($0.01 at the time of writing) whatever it contains.
+ */
+export async function fetchStoredFullText(workId: string): Promise<string> {
+  const url = new URL(`${CONTENT_BASE_URL}/works/${shortId(workId)}.grobid-xml`);
+  if (OPENALEX_API_KEY) url.searchParams.set("api_key", OPENALEX_API_KEY);
+  const response = await send(url);
+  return response.text();
+}
+
+/** The query a response answered, written in OQL, when OpenAlex reports it. */
+export function queryOql(meta: { x_query?: { oql?: string | null } | null } | null | undefined): string | null {
+  const oql = meta?.x_query?.oql;
+  return typeof oql === "string" && oql.trim() !== "" ? oql.replace(/\s+/g, " ").trim() : null;
 }
 
 /**

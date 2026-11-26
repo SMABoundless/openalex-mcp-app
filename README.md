@@ -2,9 +2,9 @@
 
 An MCP server for [OpenAlex](https://openalex.org), the open catalog of scholarly works, authors, institutions, journals, publishers and funders, with interactive views for hosts that support [MCP Apps](https://modelcontextprotocol.io).
 
-Ask your assistant to search the literature, look up a paper, follow its citations, find related work, profile an author, institution, journal, publisher, funder or subject, count works by year, author, publisher, open access status and more, get a one-call overview of a set of works, or check a reference list for works that don't exist or have been retracted. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
+Ask your assistant to search the literature, look up a paper, follow its citations, find related work, profile an author, institution, journal, publisher, funder or subject, count works by year, author, publisher, open access status and more, get a one-call overview of a set of works, check a reference list for works that don't exist or have been retracted, read a paper's open peer reviews, or run a query written in OpenAlex's own query language. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
 
-> OpenAlex also publishes its own official connector for Claude (`https://mcp.openalex.org/mcp`, listed as **OpenAlex** in Claude's connector directory). It covers more of the API than this project. This project's difference is the visual views and that you host it yourself.
+> OpenAlex also publishes its own official connector for Claude (`https://mcp.openalex.org/mcp`, listed as **OpenAlex** in Claude's connector directory). Each person signs in to it with their own OpenAlex account and budget, and it can correct your own author profile, which this project cannot. This project's difference is the visual views and that you host it yourself.
 
 ## Tools
 
@@ -30,12 +30,16 @@ Ask your assistant to search the literature, look up a paper, follow its citatio
 | `openalex_search_funders` | Search research funders, to get an ID for filtering works by funder |
 | `openalex_get_funder` | One funder by OpenAlex ID or ROR: metrics, awards, funded works per year |
 | `openalex_group_works` | Count works by year, type, open access status, author, institution, country, journal, publisher, funder, subject, keyword, language and more |
-| `openalex_analyze_works` | One-call overview of a set of works: output per year, open access share, leading fields, authors, institutions, countries, journals and funders, international co-authorship, most cited works |
+| `openalex_analyze_works` | One-call overview of a set of works: total, mean and median citations, field-weighted impact, output per year, open access share, leading fields, authors, institutions, countries, journals and funders, international co-authorship, most cited works |
 | `openalex_resolve_references` | Check up to 25 references (DOIs, PMIDs or citations in any style) against OpenAlex and flag retracted ones |
+| `openalex_get_reviews` | Open peer reviews linked to a work, with their text where the publisher serves it (eLife, Review Commons) |
+| `openalex_query` | Run a query written in OQL, OpenAlex's query language: several numbers at once, two-way breakdowns, thresholds, and lists of authors, institutions, publishers or funders |
 
 All tools are read-only.
 
 List tools return 10 results by default (up to 100 with `limit`). Use `page` for the first 10,000 results, or `cursor` to go further on the tools that list works. Semantic search returns at most 50 results and accepts only some filters; the tool description lists them.
+
+Tools that search or count works end with the query written in OQL, OpenAlex's query language. Paste it into the OQL tab at openalex.org to rerun the search or export the full results.
 
 `openalex_group_works` takes short names for what to count by, such as `year`, `author`, `publisher`, `keyword` or `top_10_percent`, as well as raw OpenAlex field names; the tool description lists them.
 
@@ -48,8 +52,12 @@ The server runs without a key, but OpenAlex then gives it a small daily budget s
 
 Two tools make several requests per call:
 
-- `openalex_analyze_works` makes 13: about $0.0013 with a filter alone, about $0.013 with a keyword query.
+- `openalex_analyze_works` makes 14: about $0.0014 with a filter alone, about $0.014 with a keyword query.
 - `openalex_resolve_references` is free for references that carry a DOI, PMID or OpenAlex ID. A citation without one is matched by its title and costs $0.001 to $0.003.
+
+`openalex_get_reviews` costs $0.0002 to list a work's reviews. Review text from eLife and Review Commons is fetched from those publishers and is free. Setting `paid_text` also downloads the full text OpenAlex stores for reviews from other publishers, at $0.01 each and at most 5 per call. That stored text is unreliable: in testing it was the review itself in one download of four, and otherwise the reviewed article or an empty file. The tool discards text that is not the review, but the charge still applies.
+
+`openalex_query` costs the same as the equivalent search. A query OpenAlex refuses is free, and the error says how to fix it. OQL is under active development at OpenAlex, so its syntax can change.
 
 ## Install
 
@@ -121,6 +129,13 @@ Requests without the right secret get a 401. `/health` stays open so the host ca
 | `TRANSPORT` | `stdio` or `http` | `stdio` |
 | `PORT` | Port for the HTTP transport | `3000` |
 
+## Other services contacted
+
+Besides OpenAlex (`api.openalex.org`, and `content.openalex.org` for stored text), the server contacts three hosts, only from `openalex_get_reviews` with `include_text`, and sends them nothing but a review's DOI:
+
+- `prod--epp.elifesciences.org`, for the text of eLife reviews
+- `doi.org` and `eeb.embo.org`, for the text of Review Commons reviews
+
 ## How results are returned
 
 Each tool result has two parts:
@@ -140,10 +155,10 @@ npm test             # run the tests
 
 Layout:
 
-- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts` and `services/format-analysis.ts` shape results, and `services/references.ts` matches citations to works.
+- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts`, `services/format-analysis.ts` and `services/format-query.ts` shape results, `services/references.ts` matches citations to works, and `services/review-text.ts` fetches review text.
 - `server/output-types.ts` — the shape of each tool's structured data. The server and the views both import it, so a renamed field fails the build.
 - `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`.
-- `test/` — tests for ID handling, pagination, formatting, the set summary and citation matching. They do not call the API.
+- `test/` — tests for ID handling, pagination, formatting, the set summary, citation matching, review text and query results. They do not call the API.
 
 ## License
 

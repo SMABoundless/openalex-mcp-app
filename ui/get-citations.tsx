@@ -27,7 +27,7 @@ function GetCitationsView() {
                 <BarChart data={chartData} />
               </section>
             )}
-            <WorkList works={data.citing_works} pagination={data.pagination} ctx={ctx} emptyMessage="No citing works found." />
+            <WorkList oql={data.oql} works={data.citing_works} pagination={data.pagination} ctx={ctx} emptyMessage="No citing works found." />
           </div>
         );
       }}

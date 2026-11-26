@@ -332,8 +332,10 @@ export function listText(options: {
   entries: string[];
   pagination: PaginationInfo;
   emptyMessage: string;
+  /** The query in OQL, shown after the results when given */
+  oql?: string | null;
 }): string {
-  const { heading, summary, entries, pagination, emptyMessage } = options;
+  const { heading, summary, entries, pagination, emptyMessage, oql } = options;
   if (entries.length === 0) return emptyMessage;
 
   const parts = [`## ${heading}`, summary];
@@ -357,8 +359,14 @@ export function listText(options: {
         : `More results available: use page=${pagination.nextPage}.`
     );
   }
+  if (oql) notes.push(oqlLine(oql));
   if (notes.length > 0) parts.push("", ...notes);
   return parts.join("\n");
+}
+
+/** One line giving a result's query in OQL and what it is for. */
+export function oqlLine(oql: string): string {
+  return `Query in OQL (paste into the OQL tab at openalex.org to rerun or export it): ${oql}`;
 }
 
 export function pageSummary(pagination: PaginationInfo, noun: string): string {

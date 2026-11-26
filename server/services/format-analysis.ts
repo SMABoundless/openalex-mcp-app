@@ -1,9 +1,9 @@
 // Builds the one-call summary of a set of works from several grouped counts.
 // Pure (no network), so it can be tested directly.
 import type { GroupByResult, OpenAlexGroupResponse, Work } from "../types.js";
-import type { AnalyzeWorksOutput, GroupOutput } from "../output-types.js";
+import type { AnalyzeWorksOutput, CitationStats, GroupOutput } from "../output-types.js";
 import { ANALYZE_YEARS } from "../constants.js";
-import { formatWorkJson, num, workListEntry } from "./format-utils.js";
+import { formatWorkJson, num, oqlLine, workListEntry } from "./format-utils.js";
 import { formatGroups, groupLine, percent, worksByYear } from "./format-entities.js";
 
 /** The grouped counts the summary is built from: a name for messages and the field to group by. */
@@ -28,6 +28,35 @@ export interface AnalysisParts {
   groups: Partial<Record<AnalysisGroupKey, OpenAlexGroupResponse>>;
   /** undefined when the list could not be fetched */
   mostCited?: Work[];
+  /** undefined when the totals could not be fetched */
+  citations?: CitationStats;
+  /** The set of works as a query in OQL, when OpenAlex reported it */
+  oql?: string | null;
+}
+
+/** The numbers asked for about the whole set, in the query language's JSON form. */
+export const CITATION_MEASURES = [
+  { measure: "count" },
+  { measure: "sum", column_id: "cited_by_count" },
+  { measure: "mean", column_id: "cited_by_count" },
+  { measure: "median", column_id: "cited_by_count" },
+  { measure: "mean", column_id: "fwci" }
+] as const;
+
+/** Reads the whole-set row of a response to CITATION_MEASURES. */
+export function citationStats(row: Record<string, unknown> | null | undefined): CitationStats | undefined {
+  const number = (key: string): number | null => {
+    const value = row?.[key];
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+  };
+  const total = number("sum_cited_by_count");
+  if (total == null) return undefined;
+  return {
+    total,
+    mean: number("mean_cited_by_count"),
+    median: number("median_cited_by_count"),
+    mean_fwci: number("mean_fwci")
+  };
 }
 
 /** Share of works that are open access in any form: everything except "closed". */
@@ -73,6 +102,7 @@ export function buildAnalysis(
   const unavailable: string[] = (Object.keys(ANALYSIS_GROUPS) as AnalysisGroupKey[])
     .filter(key => g[key] == null)
     .map(key => ANALYSIS_GROUPS[key].name);
+  if (parts.citations == null) unavailable.push("citation totals");
   if (parts.mostCited == null) unavailable.push("most cited works");
 
   return {
@@ -94,6 +124,8 @@ export function buildAnalysis(
     works_with_known_countries: collaboration.known,
     top_10_percent_share: yesShare(g.top10?.group_by ?? []),
     most_cited: (parts.mostCited ?? []).map(w => formatWorkJson(w, { compact: true })),
+    citations: parts.citations ?? null,
+    oql: parts.oql ?? null,
     unavailable
   };
 }
@@ -127,6 +159,19 @@ export function analysisMarkdown(a: AnalyzeWorksOutput): string {
       `**Highly cited:** ${percent(a.top_10_percent_share)} of works with a citation percentile are in the top 10% for their year and subfield`
     );
   }
+  if (a.citations) {
+    const c = a.citations;
+    const per = [
+      c.mean != null ? `mean ${c.mean.toFixed(1)}` : null,
+      c.median != null ? `median ${c.median.toFixed(1)}` : null
+    ].filter(Boolean).join(", ");
+    lines.push(`**Citations:** ${num(Math.round(c.total))} in total${per ? ` (${per} per work)` : ""}`);
+    if (c.mean_fwci != null) {
+      lines.push(
+        `**Field-weighted citation impact:** ${c.mean_fwci.toFixed(2)} on average (1.0 is the world average for works of the same year, type and subfield)`
+      );
+    }
+  }
   if (a.by_year.length > 0) {
     const recent = a.by_year.slice(-YEARS_IN_TEXT).map(y => `${y.year}: ${num(y.works_count)}`);
     lines.push(`**Works per year:** ${recent.join(" · ")}`);
@@ -158,5 +203,6 @@ export function analysisMarkdown(a: AnalyzeWorksOutput): string {
   if (a.unavailable.length > 0) {
     lines.push("", `Could not be fetched and left out: ${a.unavailable.join(", ")}.`);
   }
+  if (a.oql) lines.push("", oqlLine(a.oql));
   return lines.join("\n");
 }
