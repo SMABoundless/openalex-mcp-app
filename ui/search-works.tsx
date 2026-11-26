@@ -14,7 +14,7 @@ function SearchWorksView() {
           <header class="results-header">
             <h2>{formatNumber(data.pagination.total)} results</h2>
           </header>
-          <WorkList works={data.works} pagination={data.pagination} ctx={ctx} emptyMessage="No results found." />
+          <WorkList oql={data.oql} works={data.works} pagination={data.pagination} ctx={ctx} emptyMessage="No results found." />
         </div>
       )}
     </AppShell>

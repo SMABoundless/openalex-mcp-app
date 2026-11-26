@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { WorkSearchInputSchema, WorkIdSchema, PaginationSchema, CursorSchema } from "../schemas/common.js";
 import { WORK_LIST_FIELDS, SEMANTIC_MAX_RESULTS, MAX_PER_PAGE } from "../constants.js";
-import { openalexRequest, getEntity, extractPagination, makePagination } from "../services/openalex-client.js";
+import { openalexRequest, getEntity, extractPagination, makePagination, queryOql } from "../services/openalex-client.js";
 import {
   formatWorkJson,
   workListEntry,
@@ -63,7 +63,7 @@ Args:
   - page (number): Page number (default: 1). Paging reaches the first 10,000 results.
   - cursor (string, optional): For going past 10,000 results. Pass "*" to start, then the cursor from the previous response.
 
-Returns: List of works with title, authors, source, citation count, open access status, DOI, OpenAlex ID, and a shortened abstract. Use openalex_get_work for the full abstract and author affiliations.
+Returns: List of works with title, authors, source, citation count, open access status, DOI, OpenAlex ID, and a shortened abstract, followed by the query written in OQL for rerunning on openalex.org. Use openalex_get_work for the full abstract and author affiliations.
 
 Examples:
   - "CRISPR gene therapy" with filter "publication_year:2023"
@@ -97,7 +97,8 @@ Examples:
       const pagination = semantic
         ? { total: data.meta.count, count: works.length, page: 1, perPage: data.meta.per_page, hasMore: false }
         : extractPagination(data.meta, works.length, Boolean(cursor));
-      const output: SearchWorksOutput = { pagination, works };
+      const oql = queryOql(data.meta);
+      const output: SearchWorksOutput = { pagination, works, oql };
       const shownQuery = query.length > 120 ? `${query.slice(0, 120)}…` : query;
       const text = listText({
         heading: semantic ? `Works closest in meaning to "${shownQuery}"` : `Works matching "${shownQuery}"`,
@@ -107,6 +108,7 @@ Examples:
         entries: entries(works, semantic ? 0 : firstIndex(page, limit, cursor)),
         pagination,
         emptyMessage: `No works found matching "${shownQuery}"${filter ? ` with filter "${filter}"` : ""}.`,
+        oql,
       });
       return toolResult(text, output);
     } catch (error) {
@@ -193,6 +195,7 @@ Returns: List of works that cite the specified work, plus its total citation cou
         },
         pagination,
         citing_works: citing,
+        oql: queryOql(data.meta),
       };
       const text = listText({
         heading: `Works citing "${title}"`,
@@ -200,6 +203,7 @@ Returns: List of works that cite the specified work, plus its total citation cou
         entries: entries(citing, firstIndex(page, limit, cursor)),
         pagination,
         emptyMessage: `No citing works found for "${title}".`,
+        oql: output.oql,
       });
       return toolResult(text, output);
     } catch (error) {

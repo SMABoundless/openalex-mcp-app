@@ -13,6 +13,8 @@ import { registerPublishersTools } from "./tools/publishers.js";
 import { registerGroupingTools } from "./tools/grouping.js";
 import { registerAnalysisTools } from "./tools/analysis.js";
 import { registerReferencesTools } from "./tools/references.js";
+import { registerReviewsTools } from "./tools/reviews.js";
+import { registerQueryTools } from "./tools/query.js";
 import { registerAllUiResources } from "./resources/ui-resources.js";
 import { MCP_AUTH_TOKEN, isAuthorized } from "./auth.js";
 
@@ -27,6 +29,8 @@ function createServer(): McpServer {
   registerGroupingTools(server);
   registerAnalysisTools(server);
   registerReferencesTools(server);
+  registerReviewsTools(server);
+  registerQueryTools(server);
   registerAllUiResources(server);
   return server;
 }

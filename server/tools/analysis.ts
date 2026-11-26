@@ -2,11 +2,13 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { AnalyzeWorksInputSchema } from "../schemas/common.js";
 import { WORK_LIST_FIELDS, REQUEST_CONCURRENCY } from "../constants.js";
-import { openalexRequest } from "../services/openalex-client.js";
+import { openalexRequest, openalexPost, queryOql } from "../services/openalex-client.js";
 import { toolResult, toolError, READ_ONLY_ANNOTATIONS } from "../services/format-utils.js";
 import { mapLimit } from "../services/concurrency.js";
 import {
   ANALYSIS_GROUPS,
+  CITATION_MEASURES,
+  citationStats,
   analysisMarkdown,
   analysisScope,
   buildAnalysis,
@@ -24,7 +26,7 @@ const FULL_GROUPS: ReadonlySet<AnalysisGroupKey> = new Set(["year", "oaStatus", 
 export function registerAnalysisTools(server: McpServer): void {
   registerAppTool(server, "openalex_analyze_works", {
     title: "Summarise a Set of Works",
-    description: `Profile a set of works in one call: how many there are, output per year, open access share, types, the leading fields, topics, authors, institutions, countries, journals and funders, the share with international co-authorship, the share that is highly cited, and the most cited works.
+    description: `Profile a set of works in one call: how many there are, total, mean and median citations, field-weighted citation impact, output per year, open access share, types, the leading fields, topics, authors, institutions, countries, journals and funders, the share with international co-authorship, the share that is highly cited, and the most cited works.
 
 Use this for "give me an overview of..." questions about a subject, an institution, an author, a journal or a funder, instead of calling openalex_group_works many times.
 
@@ -37,9 +39,7 @@ Args:
 
 Returns: Totals, shares and rankings for the set. Ranked entries that are OpenAlex entities include their ID for use in further filters.
 
-Cost: this makes 13 metered requests, about $0.0013 with a filter alone and about $0.013 with a keyword query. If some fail, the rest is returned and the missing parts are named.
-
-Not included: total or average citations for the set. OpenAlex does not provide them.
+Cost: this makes 14 metered requests, about $0.0014 with a filter alone and about $0.014 with a keyword query. If some fail, the rest is returned and the missing parts are named.
 
 Examples:
   - filter "topics.id:T10102,publication_year:2020-2024": a subject over five years
@@ -72,6 +72,8 @@ Examples:
           select: WORK_LIST_FIELDS,
         });
         parts.mostCited = data.results;
+        // "get works ..., most cited first": the set itself, as a query
+        parts.oql = queryOql(data.meta);
       });
 
       // Each part is fetched on its own so that one failure does not lose the rest
@@ -85,6 +87,21 @@ Examples:
 
       // With no counts at all there is nothing to report; say why
       if (Object.keys(parts.groups).length === 0) throw firstError;
+
+      // Citation totals come from the query language, which can sum and average
+      // over a set. It needs the set in its structured form, which every
+      // response above echoes back.
+      const set = Object.values(parts.groups).find(g => g?.meta.x_query?.oqo)?.meta.x_query?.oqo;
+      if (set) {
+        try {
+          const data = await openalexPost<{ summary?: { all?: Record<string, unknown> } }>("", {
+            oqo: { get_rows: "works", filter_rows: set.filter_rows ?? [], calculate: CITATION_MEASURES },
+          });
+          parts.citations = citationStats(data.summary?.all);
+        } catch {
+          // Reported as unavailable by buildAnalysis
+        }
+      }
 
       const output = buildAnalysis(parts, { query, filter, top });
       if (output.total_works === 0) {

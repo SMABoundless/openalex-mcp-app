@@ -1,5 +1,7 @@
 // OpenAlex API configuration
 export const API_BASE_URL = "https://api.openalex.org";
+// Stored full text (PDF and TEI XML) is served from a separate host
+export const CONTENT_BASE_URL = "https://content.openalex.org";
 
 // OpenAlex meters usage per API key. Without a key, requests share a small
 // daily budget with everyone on the same IP address; a free key has its own
@@ -85,6 +87,16 @@ export const REQUEST_CONCURRENCY = 3;
 
 // OpenAlex allows about one semantic search per second
 export const SEMANTIC_INTERVAL_MS = 1100;
+
+// openalex_get_reviews: reviews listed per call, and the most stored texts it
+// will pay for in one call
+export const MAX_REVIEWS = 25;
+export const MAX_PAID_REVIEW_TEXTS = 5;
+
+// Each review's text is cut to this many characters, and all the texts in one
+// result together to REVIEW_TEXT_BUDGET
+export const REVIEW_TEXT_LENGTH = 15000;
+export const REVIEW_TEXT_BUDGET = 40000;
 
 // OpenAlex entity prefixes for ID resolution
 export const OPENALEX_PREFIXES = {

@@ -4,6 +4,7 @@ import { AppShell } from "./shared/components/AppShell";
 import { MetricBadge } from "./shared/components/MetricBadge";
 import { BarChart } from "./shared/components/BarChart";
 import { WorkCard } from "./shared/components/WorkCard";
+import { QueryNote } from "./shared/components/QueryNote";
 import { formatNumber } from "./shared/utils/format";
 import "./shared/styles/base.css";
 import "./shared/styles/components.css";
@@ -45,6 +46,12 @@ function Summary({ data }: { data: AnalyzeWorksOutput }) {
 
       <section class="metrics-row">
         <MetricBadge label="Works" value={data.total_works} />
+        {data.citations && <MetricBadge label="Citations" value={Math.round(data.citations.total)} />}
+        {data.citations?.mean != null && <MetricBadge label="Mean citations" value={data.citations.mean.toFixed(1)} />}
+        {data.citations?.median != null && <MetricBadge label="Median citations" value={data.citations.median.toFixed(1)} />}
+        {data.citations?.mean_fwci != null && (
+          <MetricBadge label="Field-weighted impact" value={data.citations.mean_fwci.toFixed(2)} />
+        )}
         {data.open_access_share != null && <MetricBadge label="Open access" value={percent(data.open_access_share)} />}
         {data.international_share != null && (
           <MetricBadge label="International co-authorship" value={percent(data.international_share)} />
@@ -82,11 +89,13 @@ function Summary({ data }: { data: AnalyzeWorksOutput }) {
 
       <p class="muted table-note">
         International co-authorship is the share of works with known author countries that have authors in two or more
-        countries. The top 10% share is among works that have a citation percentile.
+        countries. The top 10% share is among works that have a citation percentile. Field-weighted impact compares
+        citations with the world average for works of the same year, type and subfield, which is 1.0.
       </p>
       {data.unavailable.length > 0 && (
         <p class="muted table-note">Could not be fetched and left out: {data.unavailable.join(", ")}.</p>
       )}
+      <QueryNote oql={data.oql} />
     </div>
   );
 }

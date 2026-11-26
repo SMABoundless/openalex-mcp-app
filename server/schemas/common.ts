@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_PER_PAGE, DEFAULT_PER_PAGE, MAX_REFERENCES } from "../constants.js";
+import { MAX_PER_PAGE, DEFAULT_PER_PAGE, MAX_REFERENCES, MAX_REVIEWS, MAX_PAID_REVIEW_TEXTS } from "../constants.js";
 
 // ============================================
 // Common Parameter Schemas
@@ -202,6 +202,47 @@ export const ResolveReferencesInputSchema = {
     .describe(
       `The references to check, one per item (1-${MAX_REFERENCES}). Each can be a DOI, a PMID, an OpenAlex ID, ` +
       "or a citation in any style. A citation that contains a DOI is looked up by that DOI."
+    ),
+};
+
+// ============================================
+// Queries written in OQL
+// ============================================
+
+export const QueryInputSchema = {
+  oql: z.string()
+    .min(5)
+    .max(4000)
+    .describe("The query, written in OQL. It starts with \"get\". See the tool description for the syntax."),
+  limit: z.number()
+    .int()
+    .min(1)
+    .max(MAX_PER_PAGE)
+    .default(25)
+    .describe(`Rows to return: results for a list, groups for a table (1-${MAX_PER_PAGE}, default: 25)`),
+  page: PaginationSchema.shape.page,
+};
+
+// ============================================
+// Open peer reviews
+// ============================================
+
+export const GetReviewsInputSchema = {
+  id: WorkIdSchema,
+  limit: z.number()
+    .int()
+    .min(1)
+    .max(MAX_REVIEWS)
+    .default(10)
+    .describe(`Maximum reviews to return (1-${MAX_REVIEWS}, default: 10)`),
+  include_text: z.boolean()
+    .default(false)
+    .describe("Also fetch each review's text where its publisher serves it (eLife and Review Commons). Free."),
+  paid_text: z.boolean()
+    .default(false)
+    .describe(
+      `With include_text: for reviews from other publishers, also download the full text OpenAlex stores, at $0.01 each ` +
+      `(at most ${MAX_PAID_REVIEW_TEXTS} per call). The charge applies even when the stored text turns out not to be the review.`
     ),
 };
 

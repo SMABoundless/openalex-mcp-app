@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { AuthorSearchInputSchema, AuthorIdSchema, PaginationSchema, WorkSortSchema, FilterSchema, CursorSchema } from "../schemas/common.js";
 import { AUTHOR_LIST_FIELDS, WORK_LIST_FIELDS } from "../constants.js";
-import { openalexRequest, getEntity, extractPagination } from "../services/openalex-client.js";
+import { openalexRequest, getEntity, extractPagination, queryOql } from "../services/openalex-client.js";
 import {
   formatWorkJson,
   formatAuthorJson,
@@ -146,6 +146,7 @@ Returns: List of works by the author.`,
         author: { id: author.id, name: author.display_name, total_works: author.works_count ?? 0 },
         pagination,
         works,
+        oql: queryOql(data.meta),
       };
       const start = firstIndex(page, limit, cursor);
       const text = listText({
@@ -154,6 +155,7 @@ Returns: List of works by the author.`,
         entries: works.map((w, i) => workListEntry(w, start + i + 1)),
         pagination,
         emptyMessage: `No works found for ${author.display_name}${filter ? ` with filter "${filter}"` : ""}.`,
+        oql: output.oql,
       });
       return toolResult(text, output);
     } catch (error) {

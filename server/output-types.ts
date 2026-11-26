@@ -53,15 +53,21 @@ export interface WorkOutput {
   referenced_works_count: number;
 }
 
+// `oql` on a result is the query that produced it, written in OpenAlex's query
+// language, for rerunning or exporting on openalex.org. null when OpenAlex did
+// not report one (semantic search, for example).
+
 export interface SearchWorksOutput {
   pagination: PaginationInfo;
   works: WorkOutput[];
+  oql: string | null;
 }
 
 export interface CitationsOutput {
   cited_work: { id: string; title: string; total_citations: number; counts_by_year: YearCount[] };
   pagination: PaginationInfo;
   citing_works: WorkOutput[];
+  oql: string | null;
 }
 
 export interface ReferencesOutput {
@@ -113,6 +119,7 @@ export interface AuthorWorksOutput {
   author: { id: string; name: string; total_works: number };
   pagination: PaginationInfo;
   works: WorkOutput[];
+  oql: string | null;
 }
 
 // ---------- Institutions ----------
@@ -146,6 +153,7 @@ export interface InstitutionWorksOutput {
   institution: { id: string; name: string; total_works: number };
   pagination: PaginationInfo;
   works: WorkOutput[];
+  oql: string | null;
 }
 
 // ---------- Sources (journals, repositories, conferences) ----------
@@ -315,9 +323,19 @@ export interface GroupWorksOutput {
   more_groups: boolean;
   // For yes/no fields only: works that have no value, so are in neither group
   works_without_value?: number;
+  oql: string | null;
 }
 
 // ---------- Summary of a set of works ----------
+
+export interface CitationStats {
+  total: number;
+  mean: number | null;
+  median: number | null;
+  // Field-weighted citation impact: 1.0 is the world average for works of the
+  // same year, type and subfield
+  mean_fwci: number | null;
+}
 
 export interface AnalyzeWorksOutput {
   query: string | null;
@@ -344,6 +362,10 @@ export interface AnalyzeWorksOutput {
   // their year and subfield. null when none has one.
   top_10_percent_share: number | null;
   most_cited: WorkOutput[];
+  // Citations to the whole set. null when they could not be fetched.
+  citations: CitationStats | null;
+  // The set of works summarised, as a query
+  oql: string | null;
   // Parts that could not be fetched, by name. Empty when everything arrived.
   unavailable: string[];
 }
@@ -379,4 +401,84 @@ export interface ResolveReferencesOutput {
     errors: number;
     retracted: number;
   };
+}
+
+// ---------- Open peer reviews ----------
+
+export interface ReviewOutput {
+  // The review's own record: reviews are works in OpenAlex
+  work: WorkOutput;
+  // Where to read the review: its DOI link, or its landing page
+  link: string | null;
+  // The review's text, when it was asked for and could be fetched
+  text: string | null;
+  text_source: "elife" | "review_commons" | "openalex_stored" | null;
+  text_truncated: boolean;
+  // Why there is no text, or another remark about this review
+  note: string | null;
+  // True when OpenAlex holds a stored full text for this review (not always the review itself)
+  has_stored_text: boolean;
+}
+
+export interface GetReviewsOutput {
+  reviewed_work: { id: string; title: string; total_reviews: number };
+  reviews: ReviewOutput[];
+  // True when there are more reviews than were returned
+  more_reviews: boolean;
+  include_text: boolean;
+  // Paid downloads of stored text made by this call
+  paid_downloads: number;
+}
+
+// ---------- Queries written in OQL ----------
+
+export interface QueryColumn {
+  // Field name of this number in each row's `values`
+  key: string;
+  // How the query named it, e.g. "mean citations"
+  label: string;
+}
+
+export interface QueryRow {
+  // The OpenAlex ID when the row is an entity, otherwise the raw value
+  key: string;
+  name: string;
+  values: Record<string, number | null>;
+  // Present when the query split by two things: this row's breakdown by the second
+  groups?: QueryRow[];
+}
+
+// A row of a list of anything other than works (authors, institutions, journals, ...)
+export interface QueryEntity {
+  id: string;
+  name: string;
+  works_count: number | null;
+  cited_by_count: number | null;
+}
+
+export interface QueryTable {
+  // What the rows are split by, outermost first, e.g. ["country", "year"]. Empty for a single total.
+  splits: string[];
+  measures: QueryColumn[];
+  rows: QueryRow[];
+  // The same numbers for the whole set
+  summary: Record<string, number | null> | null;
+  // True when there are more rows than were returned
+  more_rows: boolean;
+}
+
+export interface QueryOutput {
+  // The query as OpenAlex understood it
+  oql: string;
+  // works: a list of works. entities: a list of something else. table: numbers.
+  kind: "works" | "entities" | "table";
+  // What the query asked for: works, authors, institutions, ...
+  entity: string;
+  // Works or entities matching (for a table: works counted)
+  total: number;
+  cost_usd: number | null;
+  pagination: PaginationInfo | null;
+  works: WorkOutput[];
+  entities: QueryEntity[];
+  table: QueryTable | null;
 }

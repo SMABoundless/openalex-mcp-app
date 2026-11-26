@@ -5,7 +5,17 @@
 // Common Types
 // ============================================
 
+/** The query a response answered, echoed back by OpenAlex in its query language (OQL). */
+export interface QueryEcho {
+  oql?: string | null;
+  /** The same query as structured JSON */
+  oqo?: { get_rows?: string; filter_rows?: unknown[]; [key: string]: unknown } | null;
+  url?: string | null;
+}
+
 export interface OpenAlexMeta {
+  x_query?: QueryEcho | null;
+  cost_usd?: number;
   count: number;
   db_response_time_ms: number;
   // null when cursor paging is used
@@ -28,7 +38,7 @@ export interface GroupByResult {
 
 /** A group-by request returns counts instead of results. */
 export interface OpenAlexGroupResponse {
-  meta: { count: number; groups_count: number | null };
+  meta: { count: number; groups_count: number | null; x_query?: QueryEcho | null };
   group_by: GroupByResult[];
 }
 

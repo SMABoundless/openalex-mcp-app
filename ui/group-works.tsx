@@ -2,6 +2,7 @@ import { render } from "preact";
 import type { GroupWorksOutput } from "../server/output-types";
 import { AppShell } from "./shared/components/AppShell";
 import { BarChart } from "./shared/components/BarChart";
+import { QueryNote } from "./shared/components/QueryNote";
 import { formatNumber } from "./shared/utils/format";
 import "./shared/styles/base.css";
 import "./shared/styles/components.css";
@@ -67,6 +68,7 @@ function GroupedCounts({ data }: { data: GroupWorksOutput }) {
       )}
 
       {data.more_groups && <p class="muted table-note">Only the {data.groups.length} largest groups are shown.</p>}
+      <QueryNote oql={data.oql} />
     </div>
   );
 }
