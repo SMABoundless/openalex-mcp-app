@@ -240,3 +240,20 @@ a.badge:hover { text-decoration: none; filter: brightness(0.97); }
   border: 1px solid var(--oa-warning-border); border-radius: var(--oa-radius);
   background: var(--oa-warning-bg); color: var(--oa-warning-fg);
 }
+
+/* ---------- Export ---------- */
+.button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
+.primary-button {
+  height: 32px; padding: 0 16px;
+  border: 1px solid var(--oa-accent); border-radius: var(--oa-radius-sm);
+  background: var(--oa-accent); color: var(--oa-accent-on);
+  font-family: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: opacity 0.12s;
+}
+.primary-button:hover:not(:disabled) { opacity: 0.85; }
+.primary-button:disabled { opacity: 0.6; cursor: default; }
+.file-preview {
+  margin-bottom: 8px; padding: 12px 14px; max-height: 420px; overflow: auto;
+  border: 1px solid var(--oa-border); border-radius: var(--oa-radius);
+  background: var(--oa-bg-secondary); color: var(--oa-text);
+  font-family: var(--oa-font-mono); font-size: 0.75rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere;
+}
