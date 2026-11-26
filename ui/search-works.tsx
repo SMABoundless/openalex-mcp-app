@@ -13,6 +13,9 @@ function SearchWorksView() {
         <div class="results-container">
           <header class="results-header">
             <h2>{formatNumber(data.pagination.total)} results</h2>
+            {data.reranked && (
+              <p class="results-subtitle">Re-ranked by OpenAlex: the best 100 matches are ordered by how well each answers the query.</p>
+            )}
           </header>
           <WorkList oql={data.oql} works={data.works} pagination={data.pagination} ctx={ctx} emptyMessage="No results found." />
         </div>

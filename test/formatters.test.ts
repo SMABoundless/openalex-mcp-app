@@ -8,7 +8,8 @@ import {
   workListEntry,
   workDetailMarkdown,
   listText,
-  firstIndex
+  firstIndex,
+  rerankNote
 } from "../server/services/format-utils.js";
 import { ABSTRACT_SNIPPET_LENGTH, CHARACTER_LIMIT, LIST_AUTHORS } from "../server/constants.js";
 import type { Author, Work } from "../server/types.js";
@@ -231,4 +232,13 @@ test("listText stays under the character limit and never cuts an entry in half",
   assert.ok(text.length <= CHARACTER_LIMIT + 200);
   assert.equal(text.split(entry).length - 1, 2);
   assert.match(text, /showing 2 of the 3 results on this page/);
+});
+
+test("rerankNote says when re-ranking was applied, and why when it was asked for and was not", () => {
+  const base = { requested: true, applied: false, semantic: false, relevanceOrder: true };
+  assert.equal(rerankNote({ ...base, requested: false }), "");
+  assert.match(rerankNote({ ...base, applied: true }), /^Re-ranked by OpenAlex/);
+  assert.match(rerankNote({ ...base, semantic: true }), /semantic search already orders/);
+  assert.match(rerankNote({ ...base, relevanceOrder: false }), /another sort was chosen/);
+  assert.match(rerankNote(base), /past them/);
 });

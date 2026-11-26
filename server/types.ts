@@ -16,6 +16,9 @@ export interface QueryEcho {
 export interface OpenAlexMeta {
   x_query?: QueryEcho | null;
   cost_usd?: number;
+  // Present when re-ranking was asked for: whether it was applied, and if not, why
+  reranked?: boolean;
+  rerank_reason?: string | null;
   count: number;
   db_response_time_ms: number;
   // null when cursor paging is used

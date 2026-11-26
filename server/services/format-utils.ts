@@ -364,6 +364,23 @@ export function listText(options: {
   return parts.join("\n");
 }
 
+/**
+ * A sentence about re-ranking for the result text: that it was applied, or why
+ * it was asked for and not applied. Empty when it was not asked for.
+ */
+export function rerankNote(options: {
+  requested: boolean;
+  applied: boolean;
+  semantic: boolean;
+  relevanceOrder: boolean;
+}): string {
+  if (!options.requested) return "";
+  if (options.applied) return "Re-ranked by OpenAlex: the best 100 matches are ordered by how well each answers the query.";
+  if (options.semantic) return "Re-ranking was not applied: semantic search already orders results by meaning.";
+  if (!options.relevanceOrder) return "Re-ranking was not applied: it only works in relevance order, and another sort was chosen.";
+  return "Re-ranking was not applied: it covers only the best 100 matches, and this page is past them.";
+}
+
 /** One line giving a result's query in OQL and what it is for. */
 export function oqlLine(oql: string): string {
   return `Query in OQL (paste into the OQL tab at openalex.org to rerun or export it): ${oql}`;
