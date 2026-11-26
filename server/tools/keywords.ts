@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { FindKeywordsInputSchema, KeywordSearchInputSchema } from "../schemas/common.js";
-import { WORK_LIST_FIELDS, REQUEST_CONCURRENCY, MAX_KEYWORDS, KEYWORD_TOP_TITLES } from "../constants.js";
+import { WORK_LIST_FIELDS, REQUEST_CONCURRENCY, MAX_KEYWORDS, KEYWORD_TOP_TITLES, SEED_KEYWORDS } from "../constants.js";
 import { openalexRequest, openalexPost, queryOql } from "../services/openalex-client.js";
 import {
   formatWorkJson,
@@ -14,9 +14,27 @@ import {
 } from "../services/format-utils.js";
 import { percent } from "../services/format-entities.js";
 import { mapLimit } from "../services/concurrency.js";
-import { buildKeywordQueries, cleanParts, filterClauses, keywordSlug, sampleQuery } from "../services/keywords.js";
+import {
+  buildKeywordQueries,
+  cleanParts,
+  diagnoseSeeds,
+  filterClauses,
+  keywordSlug,
+  partQuery,
+  restrictToWorks,
+  sampleQuery,
+  type CleanPart
+} from "../services/keywords.js";
+import { fetchWorksByIdentifiers } from "../services/work-lookup.js";
+import { shortId } from "../services/openalex-client.js";
 import type { Work, OpenAlexListResponse, OpenAlexMeta } from "../types.js";
-import type { FindKeywordsOutput, KeywordOutput, KeywordSearchOutput, KeywordSearchPart } from "../output-types.js";
+import type {
+  FindKeywordsOutput,
+  KeywordOutput,
+  KeywordSearchOutput,
+  KeywordSearchPart,
+  SeedCheck
+} from "../output-types.js";
 
 interface KeywordRecord {
   id: string;
@@ -35,6 +53,79 @@ const KEYWORD_FIELDS = "id,display_name,description,display_name_alternatives";
 async function countOf(oql: string): Promise<{ count: number; meta: OpenAlexMeta }> {
   const data = await openalexPost<{ meta: OpenAlexMeta }>("", { oql, per_page: 1, select: "id" });
   return { count: data.meta.count, meta: data.meta };
+}
+
+/** The OpenAlex IDs, among `ids`, of the works a query retrieves. */
+async function retrievedAmong(oql: string, ids: string[]): Promise<Set<string>> {
+  const data = await openalexPost<{ results?: { id: string }[] }>("", {
+    oql: restrictToWorks(oql, ids),
+    per_page: ids.length,
+    select: "id",
+  });
+  return new Set((data.results ?? []).map(w => shortId(w.id)));
+}
+
+/**
+ * Tests the search against papers already known to be relevant. Seeds the
+ * search misses are tried against each part on its own, without the filters,
+ * to show which part (or a filter) is leaving them out.
+ */
+async function checkSeeds(seeds: string[], combined: string, parts: CleanPart[]): Promise<SeedCheck> {
+  const { works, notFound } = await fetchWorksByIdentifiers(seeds, "id,doi,ids,display_name,publication_year,keywords");
+  // The same paper can be given more than one way
+  const records = [...new Map(works.map(w => [shortId(w.id), w] as const)).values()];
+  const ids = records.map(w => shortId(w.id));
+  if (ids.length === 0) return { total: 0, found: 0, results: [], not_in_openalex: notFound };
+
+  const found = await retrievedAmong(combined, ids);
+  const missed = ids.filter(id => !found.has(id));
+  const matchedByPart = missed.length > 0
+    ? await mapLimit(parts, REQUEST_CONCURRENCY, part => retrievedAmong(partQuery(part), missed))
+    : parts.map(() => new Set<string>());
+  const diagnoses = new Map(diagnoseSeeds(ids, found, parts, matchedByPart).map(d => [d.id, d]));
+
+  return {
+    total: ids.length,
+    found: found.size,
+    results: records.map(w => {
+      const d = diagnoses.get(shortId(w.id))!;
+      return {
+        id: shortId(w.id),
+        title: w.display_name || "Untitled",
+        year: w.publication_year ?? null,
+        found: d.found,
+        missing_parts: d.missingParts,
+        excluded_by_filters: d.excludedByFilters,
+        // Only useful for a paper the search missed: candidates to add to the part it fails
+        keywords: d.found ? [] : (w.keywords ?? []).slice(0, SEED_KEYWORDS).map(k => ({ id: keywordSlug(k.id), name: k.display_name })),
+      };
+    }),
+    not_in_openalex: notFound,
+  };
+}
+
+function seedText(check: SeedCheck): string[] {
+  const lines = ["", `### Seed check: ${check.found} of ${check.total} known papers retrieved`];
+  const missed = check.results.filter(r => !r.found);
+  if (check.total > 0 && missed.length === 0) lines.push("The search retrieves every seed paper.");
+  for (const r of missed) {
+    const why = r.excluded_by_filters
+      ? "matches every part, so a filter is leaving it out"
+      : `does not match: ${r.missing_parts.join(", ")}`;
+    lines.push(`- MISSED: **${r.title}**${r.year ? ` (${r.year})` : ""} [${r.id}]: ${why}`);
+    if (r.keywords.length > 0 && !r.excluded_by_filters) {
+      lines.push(`  Its OpenAlex keywords, as candidates to add: ${r.keywords.map(k => `${k.name} [${k.id}]`).join("; ")}`);
+    }
+  }
+  const hit = check.results.filter(r => r.found);
+  if (hit.length > 0 && missed.length > 0) lines.push(`- Retrieved: ${hit.map(r => r.id).join(", ")}`);
+  if (check.not_in_openalex.length > 0) {
+    lines.push(`Not in OpenAlex, so not checked: ${check.not_in_openalex.join(", ")}.`);
+  }
+  if (missed.length > 0) {
+    lines.push("A missed seed means similar papers are being missed too. Add words or keywords to the part it fails, then run the search again.");
+  }
+  return lines;
 }
 
 function keywordText(k: KeywordOutput, index: number): string {
@@ -187,16 +278,19 @@ Args:
   - open_access_only (boolean): Only open access works
   - language (string, optional): Language code, e.g. "en"
   - sample_size (number): Random matching works to return (0-25, default: 5)
+  - seeds (string[], optional): Up to 25 papers already known to be relevant, by OpenAlex ID, DOI, PMID or PMCID. The search is tested against them.
 
 Returns: The number of works matching all parts; how many the words alone find and how many the keywords add; for each part, the works matching its words, its keywords, and either; a random sample of the results for checking that they are on topic; and the query in OQL, for rerunning or exporting on openalex.org.
 
+With seeds, the result also says how many of them the search retrieves. For each one it misses, it names the part of the search the paper fails (or says a filter excluded it) and lists that paper's OpenAlex keywords as candidates to add. A search that misses known relevant papers is missing unknown ones too, so fix the misses and run it again.
+
 If the sample is off topic, look at the per-part counts: a part whose keywords add far more than its words is usually carrying a keyword that is too broad.
 
-Cost: up to 3 requests per part plus 3, about $0.001 each when the part has words. Around 1 cent for a two-part search.`,
+Cost: up to 3 requests per part plus 3, about $0.001 each when the part has words. Around 1 cent for a two-part search. A seed check adds 2 requests, plus 1 per part when any seed is missed.`,
     inputSchema: KeywordSearchInputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     _meta: { ui: { resourceUri: "ui://openalex/keyword-search.html" } },
-  }, async ({ parts, from_year, to_year, types, open_access_only, language, sample_size }) => {
+  }, async ({ parts, from_year, to_year, types, open_access_only, language, sample_size, seeds }) => {
     try {
       const cleaned = cleanParts(parts);
       if (cleaned.problem) return toolError("running the keyword search", new Error(cleaned.problem));
@@ -259,6 +353,8 @@ Cost: up to 3 requests per part plus 3, about $0.001 each when the part has word
         sample = data.results ?? [];
       }
 
+      const seedCheck = seeds && seeds.length > 0 ? await checkSeeds(seeds, queries.combined, cleaned.parts) : null;
+
       const output: KeywordSearchOutput = {
         total,
         text_only: textOnly,
@@ -267,6 +363,7 @@ Cost: up to 3 requests per part plus 3, about $0.001 each when the part has word
         filters: filterClauses(filters).words,
         sample: sample.map(w => formatWorkJson(w, { compact: true })),
         oql: queryOql(counts.get(queries.combined)!.meta) ?? queries.combined,
+        seeds: seedCheck,
       };
 
       const lines = [`## Keyword search: ${num(total)} works`];
@@ -290,6 +387,7 @@ Cost: up to 3 requests per part plus 3, about $0.001 each when the part has word
         lines.push("", `### Random sample of ${output.sample.length}, to check the results are on topic`);
         output.sample.forEach((w, i) => lines.push(workListEntry(w, i + 1)));
       }
+      if (seedCheck) lines.push(...seedText(seedCheck));
       lines.push("", oqlLine(output.oql));
       return toolResult(lines.join("\n"), output);
     } catch (error) {

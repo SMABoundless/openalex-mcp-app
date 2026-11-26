@@ -535,6 +535,29 @@ export interface KeywordSearchOutput {
   // A random sample of the matching works, for checking they are on topic
   sample: WorkOutput[];
   oql: string;
+  // How the search did against papers already known to be relevant; null when none were given
+  seeds: SeedCheck | null;
+}
+
+export interface SeedResult {
+  id: string;
+  title: string;
+  year: number | null;
+  found: boolean;
+  // The parts of the search this paper does not match; empty when it was found
+  missing_parts: string[];
+  // True when it matches every part and a filter left it out
+  excluded_by_filters: boolean;
+  // OpenAlex's keywords for this paper, as candidates to add to a part it misses
+  keywords: { id: string; name: string }[];
+}
+
+export interface SeedCheck {
+  total: number;
+  found: number;
+  results: SeedResult[];
+  // Seed identifiers that are not in OpenAlex, so could not be checked
+  not_in_openalex: string[];
 }
 
 // ---------- Export ----------

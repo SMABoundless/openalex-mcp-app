@@ -114,6 +114,10 @@ export const EXPORT_MAX_RECORDS = 500;
 // A file up to this many characters is also given to the model as text
 export const EXPORT_TEXT_LIMIT = 20000;
 
+// openalex_keyword_search: seed papers checked per call, and keywords shown for each seed it misses
+export const MAX_SEEDS = 25;
+export const SEED_KEYWORDS = 8;
+
 // OpenAlex entity prefixes for ID resolution
 export const OPENALEX_PREFIXES = {
   work: "W",

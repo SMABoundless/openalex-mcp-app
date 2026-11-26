@@ -35,7 +35,7 @@ Ask your assistant to search the literature, look up a paper, follow its citatio
 | `openalex_get_reviews` | Open peer reviews linked to a work, with their text where the publisher serves it (eLife, Review Commons) |
 | `openalex_query` | Run a query written in OQL, OpenAlex's query language: several numbers at once, two-way breakdowns, thresholds, and lists of authors, institutions, publishers or funders |
 | `openalex_find_keywords` | Find the OpenAlex keywords that fit a topic, from key phrases or a description, with each keyword's most cited works |
-| `openalex_keyword_search` | Thorough search in parts: each part matches on its words or on chosen keywords. Reports what each piece contributes and returns a random sample |
+| `openalex_keyword_search` | Thorough search in parts: each part matches on its words or on chosen keywords. Reports what each piece contributes, returns a random sample, and can test the search against papers you already know are relevant |
 | `openalex_export_works` | Export works as RIS, BibTeX or CSV, from a list of IDs or a search, with duplicates removed |
 
 All tools are read-only.
@@ -63,6 +63,8 @@ Two tools make several requests per call:
 - `openalex_resolve_references` is free for references that carry a DOI, PMID, PMCID or OpenAlex ID. A citation without one is matched by its title and costs $0.001 to $0.003.
 
 `openalex_get_reviews` costs $0.0002 to list a work's reviews. Review text from eLife and Review Commons is fetched from those publishers and is free. Setting `paid_text` also downloads the full text OpenAlex stores for reviews from other publishers, at $0.01 each and at most 5 per call. That stored text is unreliable: in testing it was the review itself in one download of four, and otherwise the reviewed article or an empty file. The tool discards text that is not the review, but the charge still applies.
+
+`openalex_keyword_search` takes `seeds`: up to 25 papers already known to be relevant. It reports how many the search retrieves and, for each one it misses, which part of the search the paper fails or whether a filter excluded it, with that paper's OpenAlex keywords as candidates to add. A search that misses known papers is missing unknown ones too. The check adds 2 requests, plus 1 per part when a seed is missed.
 
 `openalex_find_keywords` costs $0.001 per phrase and about $0.0001 per keyword returned; giving it a description adds $0.01. `openalex_keyword_search` makes up to 3 requests per part plus 3, around 1 cent for a two-part search.
 

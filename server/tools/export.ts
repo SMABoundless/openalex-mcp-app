@@ -1,63 +1,21 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { ExportWorksInputSchema } from "../schemas/common.js";
-import { CHARACTER_LIMIT, EXPORT_MAX_RECORDS, EXPORT_TEXT_LIMIT, REQUEST_CONCURRENCY } from "../constants.js";
+import { CHARACTER_LIMIT, EXPORT_MAX_RECORDS, EXPORT_TEXT_LIMIT } from "../constants.js";
 import { openalexRequest, queryOql } from "../services/openalex-client.js";
 import { num, oqlLine, toolResult, toolError, READ_ONLY_ANNOTATIONS } from "../services/format-utils.js";
-import { mapLimit } from "../services/concurrency.js";
+import { fetchWorksByIdentifiers } from "../services/work-lookup.js";
 import {
   EXPORT_FIELDS,
-  bareDoi,
   dedupeRecords,
   exportFile,
-  groupIdentifiers,
   summariseRepeats,
   toExportRecord
 } from "../services/export.js";
 import type { Work, OpenAlexListResponse } from "../types.js";
 import type { ExportWorksOutput } from "../output-types.js";
 
-/** Identifiers looked up per request; OpenAlex accepts up to 100 values in one filter */
-const ID_BATCH = 50;
 const PAGE_SIZE = 100;
-
-type IdKind = "openalex_id" | "doi" | "pmid" | "pmcid";
-
-/** The value a work has for one kind of identifier, in the form groupIdentifiers produces. */
-function identifierOf(work: Work, kind: IdKind): string | null {
-  if (kind === "openalex_id") return work.id.replace("https://openalex.org/", "").toUpperCase();
-  if (kind === "doi") return bareDoi(work.doi)?.toLowerCase() ?? null;
-  const digits = (kind === "pmid" ? work.ids?.pmid : work.ids?.pmcid)?.match(/(\d+)\/?$/)?.[1];
-  if (!digits) return null;
-  return kind === "pmid" ? digits : `PMC${digits}`;
-}
-
-async function fetchByIds(ids: string[]): Promise<{ works: Work[]; notFound: string[] }> {
-  const groups = groupIdentifiers(ids);
-  const batches: { kind: IdKind; values: string[] }[] = [];
-  for (const kind of ["openalex_id", "doi", "pmid", "pmcid"] as const) {
-    for (let i = 0; i < groups[kind].length; i += ID_BATCH) batches.push({ kind, values: groups[kind].slice(i, i + ID_BATCH) });
-  }
-  const works: Work[] = [];
-  const notFound = [...groups.unknown];
-  const results = await mapLimit(batches, REQUEST_CONCURRENCY, batch =>
-    openalexRequest<OpenAlexListResponse<Work>>({
-      endpoint: "works",
-      params: { filter: `${batch.kind}:${batch.values.join("|")}` },
-      perPage: PAGE_SIZE,
-      select: EXPORT_FIELDS,
-    })
-  );
-  results.forEach((result, i) => {
-    const { kind, values } = batches[i];
-    const found = new Set(result.results.map(w => identifierOf(w, kind)).filter(Boolean));
-    works.push(...result.results);
-    for (const value of values) {
-      if (!found.has(kind === "doi" ? value.toLowerCase() : value)) notFound.push(value);
-    }
-  });
-  return { works, notFound };
-}
 
 async function fetchBySearch(
   query: string | undefined,
@@ -142,7 +100,7 @@ Cost: about $0.0001 per 100 records, or $0.001 per 100 with a keyword query.`,
       let oql: string | null = null;
       let notFound: string[] = [];
       if (byIds) {
-        ({ works, notFound } = await fetchByIds(ids!));
+        ({ works, notFound } = await fetchWorksByIdentifiers(ids!, EXPORT_FIELDS));
       } else {
         ({ works, matched, oql } = await fetchBySearch(query, filter, sort, max_records));
       }

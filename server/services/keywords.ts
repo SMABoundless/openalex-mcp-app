@@ -149,3 +149,48 @@ export function buildKeywordQueries(parts: CleanPart[], filters: KeywordFilters)
 export function sampleQuery(oql: string, size: number): string {
   return `${oql} sample ${size}`;
 }
+
+// ============================================
+// Checking a search against seed papers
+// ============================================
+//
+// A thorough search should retrieve the papers already known to be relevant.
+// Seeds it misses show where it is too narrow: each miss is traced to the part
+// of the topic it fails, or to a filter.
+
+/** Narrows a query to the works with these OpenAlex IDs. */
+export function restrictToWorks(oql: string, ids: string[]): string {
+  return `${oql} and openalex id is (${ids.join(" or ")})`;
+}
+
+/** One part's condition on its own, without the filters, as a query. */
+export function partQuery(part: CleanPart): string {
+  return `get works where ${partClause(part, "either")}`;
+}
+
+export interface SeedDiagnosis {
+  id: string;
+  found: boolean;
+  /** Labels of the parts this seed does not match; empty when it was found */
+  missingParts: string[];
+  /** True when the seed matches every part and was left out by a filter */
+  excludedByFilters: boolean;
+}
+
+/**
+ * Works out why each seed was or was not retrieved.
+ * `found` holds the seeds the whole search retrieved; `matchedByPart[i]` holds
+ * the seeds that match part i when the filters are left off.
+ */
+export function diagnoseSeeds(
+  seedIds: string[],
+  found: ReadonlySet<string>,
+  parts: CleanPart[],
+  matchedByPart: ReadonlySet<string>[]
+): SeedDiagnosis[] {
+  return seedIds.map(id => {
+    if (found.has(id)) return { id, found: true, missingParts: [], excludedByFilters: false };
+    const missingParts = parts.filter((_, i) => !matchedByPart[i]?.has(id)).map(p => p.label);
+    return { id, found: false, missingParts, excludedByFilters: missingParts.length === 0 };
+  });
+}
