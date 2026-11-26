@@ -11,6 +11,7 @@ import { registerSourcesTools } from "./tools/sources.js";
 import { registerTopicsAndFundersTools } from "./tools/topics-funders.js";
 import { registerGroupingTools } from "./tools/grouping.js";
 import { registerAllUiResources } from "./resources/ui-resources.js";
+import { MCP_AUTH_TOKEN, isAuthorized } from "./auth.js";
 
 function createServer(): McpServer {
   const server = new McpServer({ name: "openalex-mcp-app", version: "1.0.0" });
@@ -49,6 +50,14 @@ async function runHTTP(): Promise<void> {
   });
 
   app.post("/mcp", async (req, res) => {
+    if (!isAuthorized(req.headers.authorization, req.query.key)) {
+      res.status(401).set("WWW-Authenticate", "Bearer").json({
+        jsonrpc: "2.0",
+        error: { code: -32001, message: "Unauthorized: this server requires its shared secret." },
+        id: null,
+      });
+      return;
+    }
     const server = createServer();
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     res.on("close", () => transport.close());
@@ -72,6 +81,13 @@ if (!process.env.OPENALEX_API_KEY?.trim()) {
   console.error(
     "Warning: OPENALEX_API_KEY is not set. OpenAlex allows only a small number of " +
     "requests per day without a key. Get a free key at https://openalex.org/settings/api"
+  );
+}
+
+if (transport === "http" && !MCP_AUTH_TOKEN) {
+  console.error(
+    "Warning: MCP_AUTH_TOKEN is not set. Anyone who knows this server's URL can use it, " +
+    "and with it your OpenAlex budget. Set MCP_AUTH_TOKEN to require a shared secret."
   );
 }
 
