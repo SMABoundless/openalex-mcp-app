@@ -56,6 +56,18 @@ export const FUNDER_LIST_FIELDS = [
   "ids", "awards_count", "works_count", "cited_by_count", "summary_stats"
 ].join(",");
 
+export const PUBLISHER_LIST_FIELDS = [
+  "id", "display_name", "alternate_titles", "hierarchy_level", "parent_publisher", "country_codes",
+  "homepage_url", "works_count", "cited_by_count", "summary_stats", "ids"
+].join(",");
+
+// A publisher's profile lists this many of its largest sources
+export const PUBLISHER_TOP_SOURCES = 10;
+
+// Topic, funder and publisher profiles report this many recent years.
+// OpenAlex's own yearly counts for a funder can reach back to the 1800s.
+export const PROFILE_YEARS = 15;
+
 export const INSTITUTION_LIST_FIELDS = [
   "id", "ror", "display_name", "type", "country_code", "geo",
   "works_count", "cited_by_count", "summary_stats"

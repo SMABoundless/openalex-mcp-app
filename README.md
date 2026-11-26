@@ -1,8 +1,8 @@
 # OpenAlex MCP App
 
-An MCP server for [OpenAlex](https://openalex.org), the open catalog of scholarly works, authors and institutions, with interactive views for hosts that support [MCP Apps](https://modelcontextprotocol.io).
+An MCP server for [OpenAlex](https://openalex.org), the open catalog of scholarly works, authors, institutions, journals, publishers and funders, with interactive views for hosts that support [MCP Apps](https://modelcontextprotocol.io).
 
-Ask your assistant to search the literature, look up a paper, follow its citations, profile an author, institution or journal, or count works by year, type or open access status. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
+Ask your assistant to search the literature, look up a paper, follow its citations, find related work, profile an author, institution, journal, publisher, funder or subject, or count works by year, author, publisher, open access status and more. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
 
 > OpenAlex also publishes its own official connector for Claude (`https://mcp.openalex.org/mcp`, listed as **OpenAlex** in Claude's connector directory). It covers more of the API than this project. This project's difference is the visual views and that you host it yourself.
 
@@ -14,6 +14,7 @@ Ask your assistant to search the literature, look up a paper, follow its citatio
 | `openalex_get_work` | One work by OpenAlex ID, DOI or PMID: authors with affiliations, full abstract, topics |
 | `openalex_get_citations` | Works that cite a given work, with citations per year |
 | `openalex_get_references` | Works a given work cites, in the order of its reference list |
+| `openalex_get_related_works` | Works OpenAlex judges to be on a similar subject to a given work |
 | `openalex_search_authors` | Search author profiles |
 | `openalex_get_author` | One author by OpenAlex ID or ORCID: metrics, affiliation history, topics |
 | `openalex_get_author_works` | An author's works, with filters and sorting |
@@ -22,20 +23,26 @@ Ask your assistant to search the literature, look up a paper, follow its citatio
 | `openalex_get_institution_works` | An institution's works, with filters and sorting |
 | `openalex_search_sources` | Search journals, repositories and conferences; compare open access status and article processing charges |
 | `openalex_get_source` | One source by OpenAlex ID or ISSN: publisher, access, metrics, topics, yearly output |
+| `openalex_search_publishers` | Search publishers, to get an ID for filtering works or journals by publisher |
+| `openalex_get_publisher` | One publisher by OpenAlex ID or ROR: parent publisher, metrics, yearly output, largest journals |
 | `openalex_search_topics` | Search OpenAlex's subject topics, to get an ID for filtering works by subject |
+| `openalex_get_topic` | One topic by OpenAlex ID: place in the subject hierarchy, keywords, yearly output, neighbouring topics |
 | `openalex_search_funders` | Search research funders, to get an ID for filtering works by funder |
-| `openalex_group_works` | Count works by year, type, open access status, institution, journal, topic, funder or country |
+| `openalex_get_funder` | One funder by OpenAlex ID or ROR: metrics, awards, funded works per year |
+| `openalex_group_works` | Count works by year, type, open access status, author, institution, country, journal, publisher, funder, subject, keyword, language and more |
 
 All tools are read-only.
 
 List tools return 10 results by default (up to 100 with `limit`). Use `page` for the first 10,000 results, or `cursor` to go further on the tools that list works. Semantic search returns at most 50 results and accepts only some filters; the tool description lists them.
+
+`openalex_group_works` takes short names for what to count by, such as `year`, `author`, `publisher`, `keyword` or `top_10_percent`, as well as raw OpenAlex field names; the tool description lists them.
 
 ## Requirements
 
 - Node.js 22
 - An OpenAlex API key. It is free: create one at <https://openalex.org/settings/api>.
 
-The server runs without a key, but OpenAlex then gives it a small daily budget shared with everyone on the same IP address. On a shared host that budget is usually already spent. With a key you get your own, larger daily budget. Looking up a single record by ID is free; searches and lists are metered.
+The server runs without a key, but OpenAlex then gives it a small daily budget shared with everyone on the same IP address. On a shared host that budget is usually already spent. With a key you get your own, larger daily budget. Looking up a single record by ID is free; searches and lists are metered. The topic and publisher profiles each add one small metered request (for yearly output and for the list of journals); if it fails, the profile is returned without that part.
 
 ## Install
 

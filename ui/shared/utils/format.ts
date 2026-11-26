@@ -24,3 +24,8 @@ export function worksPerYear(works: WorkOutput[]): { label: string; value: numbe
 export function doiUrl(doi: string): string {
   return doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
 }
+
+/** "https://openalex.org/T10102" -> "T10102" */
+export function shortId(id: string): string {
+  return id.replace("https://openalex.org/", "");
+}

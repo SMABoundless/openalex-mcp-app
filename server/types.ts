@@ -26,6 +26,19 @@ export interface GroupByResult {
   count: number;
 }
 
+/** A group-by request returns counts instead of results. */
+export interface OpenAlexGroupResponse {
+  meta: { count: number; groups_count: number | null };
+  group_by: GroupByResult[];
+}
+
+/** The same organisation can appear in OpenAlex as a funder, an institution and a publisher. */
+export interface EntityRole {
+  role: string;
+  id: string;
+  works_count: number;
+}
+
 export interface DehydratedEntity {
   id: string;
   display_name: string;
@@ -432,4 +445,31 @@ export interface Funder {
   };
   ids?: ExternalIds;
   counts_by_year?: CountByYear[];
+  roles?: EntityRole[];
+}
+
+// ============================================
+// Publisher Types
+// ============================================
+
+export interface Publisher {
+  id: string;
+  display_name: string;
+  alternate_titles?: string[];
+  // 0 for a top-level publisher, 1 or more for an imprint or subsidiary
+  hierarchy_level?: number;
+  parent_publisher?: DehydratedEntity | null;
+  lineage?: string[];
+  country_codes?: string[];
+  homepage_url?: string;
+  works_count: number;
+  cited_by_count: number;
+  summary_stats?: {
+    "2yr_mean_citedness": number;
+    h_index: number;
+    i10_index: number;
+  };
+  ids?: ExternalIds;
+  counts_by_year?: CountByYear[];
+  roles?: EntityRole[];
 }
