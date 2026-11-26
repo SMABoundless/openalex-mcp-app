@@ -41,6 +41,21 @@ export const AUTHOR_LIST_FIELDS = [
   "summary_stats", "last_known_institutions", "affiliations", "topics"
 ].join(",");
 
+export const SOURCE_LIST_FIELDS = [
+  "id", "display_name", "type", "issn_l", "issn", "host_organization_name", "country_code",
+  "is_oa", "is_in_doaj", "apc_usd", "works_count", "cited_by_count", "summary_stats", "homepage_url"
+].join(",");
+
+export const TOPIC_LIST_FIELDS = [
+  "id", "display_name", "description", "keywords", "subfield", "field", "domain",
+  "works_count", "cited_by_count"
+].join(",");
+
+export const FUNDER_LIST_FIELDS = [
+  "id", "display_name", "alternate_titles", "country_code", "description", "homepage_url",
+  "ids", "awards_count", "works_count", "cited_by_count", "summary_stats"
+].join(",");
+
 export const INSTITUTION_LIST_FIELDS = [
   "id", "ror", "display_name", "type", "country_code", "geo",
   "works_count", "cited_by_count", "summary_stats"

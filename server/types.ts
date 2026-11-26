@@ -328,6 +328,8 @@ export interface Topic {
   field: DehydratedEntity;
   domain: DehydratedEntity;
   
+  keywords?: { id: string; display_name: string; score?: number }[];
+
   // Related
   siblings: DehydratedEntity[];
   
@@ -366,6 +368,7 @@ export interface Source {
   type: string;
   is_oa: boolean;
   is_in_doaj: boolean;
+  country_code?: string;
   
   // URLs
   homepage_url?: string;
@@ -406,4 +409,27 @@ export interface SourceTopic {
   subfield: DehydratedEntity;
   field: DehydratedEntity;
   domain: DehydratedEntity;
+}
+
+// ============================================
+// Funder Types
+// ============================================
+
+export interface Funder {
+  id: string;
+  display_name: string;
+  alternate_titles?: string[];
+  country_code?: string;
+  description?: string;
+  homepage_url?: string;
+  awards_count?: number;
+  works_count: number;
+  cited_by_count: number;
+  summary_stats?: {
+    "2yr_mean_citedness": number;
+    h_index: number;
+    i10_index: number;
+  };
+  ids?: ExternalIds;
+  counts_by_year?: CountByYear[];
 }

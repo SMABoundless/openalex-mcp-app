@@ -14,7 +14,7 @@ import { budgetNotice, shortId } from "./openalex-client.js";
 // Shared helpers
 // ============================================
 
-const num = (n: number | null | undefined): string => (n ?? 0).toLocaleString("en-US");
+export const num = (n: number | null | undefined): string => (n ?? 0).toLocaleString("en-US");
 
 /**
  * Reconstruct abstract from inverted index.
@@ -41,7 +41,7 @@ function snippet(text: string, max: number): string {
   return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
 }
 
-function yearCounts(counts: CountByYear[] | null | undefined): YearCount[] {
+export function yearCounts(counts: CountByYear[] | null | undefined): YearCount[] {
   return (counts ?? []).map(c => ({
     year: c.year,
     cited_by_count: c.cited_by_count,
@@ -49,7 +49,7 @@ function yearCounts(counts: CountByYear[] | null | undefined): YearCount[] {
   }));
 }
 
-function topicCounts(
+export function topicCounts(
   topics: { id: string; display_name: string; count: number; field?: { display_name: string }; domain?: { display_name: string } }[] | null | undefined
 ): TopicCount[] {
   return (topics ?? []).slice(0, 10).map(t => ({

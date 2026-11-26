@@ -138,3 +138,50 @@ export const InstitutionSearchInputSchema = {
   limit: PaginationSchema.shape.limit,
   page: PaginationSchema.shape.page,
 };
+
+// ============================================
+// Sources, topics, funders
+// ============================================
+
+const CountSortSchema = z.enum([
+  "relevance_score:desc",
+  "cited_by_count:desc",
+  "cited_by_count:asc",
+  "works_count:desc",
+  "works_count:asc"
+]).default("relevance_score:desc");
+
+export const SourceIdSchema = z.string()
+  .min(1)
+  .describe("Source identifier. Accepts: OpenAlex ID (S1983995261), ISSN (2167-8359), or full URL (https://openalex.org/S...)");
+
+const entitySearchSchema = (what: string) => ({
+  query: z.string().min(1).max(500).describe(`Name or search terms for the ${what}`),
+  filter: FilterSchema,
+  sort: CountSortSchema.describe(`Sort order for ${what} results`),
+  limit: PaginationSchema.shape.limit,
+  page: PaginationSchema.shape.page,
+});
+
+export const SourceSearchInputSchema = entitySearchSchema("source");
+export const TopicSearchInputSchema = entitySearchSchema("topic");
+export const FunderSearchInputSchema = entitySearchSchema("funder");
+
+// ============================================
+// Grouping
+// ============================================
+
+export const GroupWorksInputSchema = {
+  group_by: z.string()
+    .min(1)
+    .max(100)
+    .describe("The works field to count by, e.g. publication_year, type, open_access.oa_status, primary_topic.field.id"),
+  query: z.string().min(1).max(500).optional().describe("Optional keyword search to restrict which works are counted"),
+  filter: FilterSchema,
+  limit: z.number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(25)
+    .describe("Maximum number of groups to return, largest first (1-100, default: 25)"),
+};

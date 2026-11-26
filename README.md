@@ -2,7 +2,7 @@
 
 An MCP server for [OpenAlex](https://openalex.org), the open catalog of scholarly works, authors and institutions, with interactive views for hosts that support [MCP Apps](https://modelcontextprotocol.io).
 
-Ask your assistant to search the literature, look up a paper, follow its citations, or profile an author or institution. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
+Ask your assistant to search the literature, look up a paper, follow its citations, profile an author, institution or journal, or count works by year, type or open access status. In hosts that render MCP Apps, such as Claude Desktop and claude.ai, each answer also appears as a view with result cards, charts and paging. In hosts that don't, such as Claude Code, the same tools work as ordinary text tools.
 
 > OpenAlex also publishes its own official connector for Claude (`https://mcp.openalex.org/mcp`, listed as **OpenAlex** in Claude's connector directory). It covers more of the API than this project. This project's difference is the visual views and that you host it yourself.
 
@@ -20,6 +20,11 @@ Ask your assistant to search the literature, look up a paper, follow its citatio
 | `openalex_search_institutions` | Search institutions |
 | `openalex_get_institution` | One institution by OpenAlex ID or ROR: metrics, topics, related institutions |
 | `openalex_get_institution_works` | An institution's works, with filters and sorting |
+| `openalex_search_sources` | Search journals, repositories and conferences; compare open access status and article processing charges |
+| `openalex_get_source` | One source by OpenAlex ID or ISSN: publisher, access, metrics, topics, yearly output |
+| `openalex_search_topics` | Search OpenAlex's subject topics, to get an ID for filtering works by subject |
+| `openalex_search_funders` | Search research funders, to get an ID for filtering works by funder |
+| `openalex_group_works` | Count works by year, type, open access status, institution, journal, topic, funder or country |
 
 All tools are read-only.
 
@@ -102,7 +107,7 @@ npm test             # run the formatter tests
 
 Layout:
 
-- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts` shapes results.
+- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts` and `services/format-entities.ts` shape results.
 - `server/output-types.ts` — the shape of each tool's structured data. The server and the views both import it, so a renamed field fails the build.
 - `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`.
 - `test/` — tests for ID handling, pagination and formatting. They do not call the API.

@@ -195,7 +195,7 @@ export async function getEntity<T>(entityType: string, id: string, select?: stri
 
 /**
  * Normalize various ID formats to something the OpenAlex API accepts.
- * Accepts: OpenAlex ID, DOI, PMID, ORCID, ROR
+ * Accepts: OpenAlex ID, DOI, PMID, ORCID, ROR, ISSN
  */
 export function normalizeOpenAlexId(rawId: string): string {
   const id = rawId.trim();
@@ -214,6 +214,11 @@ export function normalizeOpenAlexId(rawId: string): string {
   if (id.startsWith("10.") || id.startsWith("https://doi.org/")) {
     const doi = id.replace("https://doi.org/", "");
     return `https://doi.org/${doi}`;
+  }
+
+  // ISSN
+  if (/^\d{4}-\d{3}[\dXx]$/.test(id)) {
+    return `issn:${id.toUpperCase()}`;
   }
 
   // PMID
