@@ -118,6 +118,10 @@ export const EXPORT_TEXT_LIMIT = 20000;
 export const MAX_SEEDS = 25;
 export const SEED_KEYWORDS = 8;
 
+// openalex_read_docs returns a whole page up to this many characters; a longer
+// page comes back as its opening and a list of sections to ask for
+export const DOCS_PAGE_LIMIT = 30000;
+
 // OpenAlex entity prefixes for ID resolution
 export const OPENALEX_PREFIXES = {
   work: "W",

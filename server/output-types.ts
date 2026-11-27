@@ -585,3 +585,24 @@ export interface ExportWorksOutput {
   exported_at: string;
   abstracts: boolean;
 }
+
+// ---------- Documentation ----------
+
+export interface ReadDocsOutput {
+  topic: string;
+  title: string;
+  // The page on help.openalex.org
+  url: string;
+  // The heading asked for; null when the page was asked for as a whole
+  section: string | null;
+  // What is returned: the whole page, the matching sections, or the page's opening
+  mode: "page" | "sections" | "overview";
+  // Markdown
+  content: string;
+  // True when the content was cut to fit
+  truncated: boolean;
+  // The page's headings, for choosing a section
+  headings: { level: number; text: string }[];
+  // When the page was fetched from the documentation site, as an ISO date and time
+  fetched_at: string;
+}
