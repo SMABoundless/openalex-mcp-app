@@ -172,10 +172,13 @@ The other three are contacted only from `openalex_get_reviews` with `include_tex
 
 ## Visual style
 
-The views are styled after [openalex.org](https://openalex.org): its colours, type sizes, radii and shadows (the site's own `--ox-*` design tokens), its text and code fonts, and its category colours for works, authors, sources, institutions and topics. A dark variant is added for hosts in dark mode; the OpenAlex site itself is light only.
+The views share a house style with [ReviewSeed](https://reviewseed.library.northwestern.edu), so that they are recognisable as part of the same family of tools.
 
-- **Fonts:** Inter and JetBrains Mono, both under the SIL Open Font License. Small subsets are bundled into every view, because views run in a sandboxed frame that cannot load fonts from the network. The licences are in `ui/shared/fonts/`.
-- **No OpenAlex logo:** the views do not use OpenAlex's mark or wordmark. Each view opens with a chip naming the kind of record shown and the words "Unofficial app · data from OpenAlex". This project is not affiliated with or endorsed by OpenAlex (OurResearch).
+- **The family style** is ReviewSeed's own design: warm off-white paper with white cards, near-black ink, Fraunces for titles, Inter for text, JetBrains Mono for small labels and code, nearly square corners, no shadows, small upper-case section labels, and a near-black box for queries. A dark variant follows the host.
+- **One accent colour per app.** `--app-accent` and `--app-accent-soft` at the top of `ui/shared/styles/base.css` are the only values an app sets, in light and dark. This app uses ReviewSeed's blue. Buttons, links, the header marker and the main charts follow it; authors, sources, institutions, topics and funders each keep one of the family's other muted hues.
+- **Accessibility.** Every text colour meets WCAG AA contrast (4.5:1) on the background it is used on, in both themes, and `test/contrast.test.ts` reads the stylesheet and fails if a pairing drops below that. No text is smaller than 11px except the 10px marker in the header. Screen readers and keyboard-only use have not been tested.
+- **Fonts:** Fraunces, Inter and JetBrains Mono, each under the SIL Open Font License. Subsets are bundled into every view, because views run in a sandboxed frame that cannot load fonts from the network. The licences are in `ui/shared/fonts/`.
+- **No logos:** the views carry neither OpenAlex's nor ReviewSeed's mark. Each opens with a marker naming the kind of record shown and the words "Unofficial app · data from OpenAlex". This project is not affiliated with or endorsed by OpenAlex (OurResearch).
 
 ## How results are returned
 
@@ -201,7 +204,7 @@ Layout:
 
 - `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts`, `services/format-analysis.ts` and `services/format-query.ts` shape results, `services/references.ts` matches citations to works, `services/export.ts` writes RIS, BibTeX and CSV, `services/keywords.ts` builds keyword searches, `services/docs.ts` fetches and splits documentation pages, and `services/review-text.ts` fetches review text.
 - `server/output-types.ts` — the shape of each tool's structured data. The server and the views both import it, so a renamed field fails the build.
-- `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`. `ui/shared/styles/base.css` holds the design tokens.
+- `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`. `ui/shared/styles/base.css` holds the design tokens and the app's accent colour.
 - `test/` — unit tests for the pure logic (`test/*.test.ts`); end-to-end tests in `test/integration/`, where a real MCP client calls the real server and OpenAlex is replaced by canned replies; and `test/live/`, run by hand against the real API. There are no tests of the views themselves.
 
 ## License
