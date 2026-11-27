@@ -48,10 +48,10 @@ export function BarChart({ data, horizontal, height = 180 }: BarChartProps) {
           return (
             <g key={d.label}>
               <rect x={x} y={y} width={barWidth} height={barH} rx={3} fill="var(--oa-cat-mid)" />
-              <text x={x + barWidth / 2} y={y - 4} text-anchor="middle" font-size="10" fill="var(--oa-text-secondary)">
+              <text x={x + barWidth / 2} y={y - 4} text-anchor="middle" font-size="11" fill="var(--oa-text-secondary)">
                 {d.value > 0 ? compact(d.value) : ""}
               </text>
-              <text x={x + barWidth / 2} y={height - 6} text-anchor="middle" font-size="10" fill="var(--oa-text-secondary)">
+              <text x={x + barWidth / 2} y={height - 6} text-anchor="middle" font-size="11" fill="var(--oa-text-secondary)">
                 {d.label}
               </text>
             </g>

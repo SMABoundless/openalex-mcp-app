@@ -282,3 +282,85 @@ a.badge:hover { text-decoration: none; filter: brightness(0.97); }
 }
 .link-button:hover:not(:disabled) { text-decoration: underline; }
 .link-button:disabled { color: var(--oa-text-muted); cursor: default; }
+
+/* ==========================================================================
+   House style.
+   These rules follow ReviewSeed's components: serif titles, small upper-case
+   labels, flat chips with nearly square corners, white cards on warm paper,
+   an accent-coloured primary button and a near-black box for queries.
+   No text is smaller than 11px, except the 10px marker in the header;
+   ReviewSeed's own labels go smaller.
+   ========================================================================== */
+
+/* Surfaces: white cards on paper, a line and no shadow */
+.card, .chart-container { background: var(--oa-surface); border-color: var(--oa-border); box-shadow: none; }
+.card:hover { border-color: var(--oa-border-strong); }
+.badge-metric, .copy-button, .pagination button:disabled { background: var(--oa-surface); }
+
+/* Titles in Fraunces */
+.card-title { font-family: var(--oa-font-serif); font-size: 0.9375rem; font-weight: 500; line-height: 1.4; letter-spacing: -0.006em; }
+.card-title a { color: var(--oa-title); }
+.card-title a:hover { color: var(--oa-accent); text-decoration: none; }
+.results-header h2, .doc-h1 { font-family: var(--oa-font-serif); font-size: 1.25rem; font-weight: 500; letter-spacing: -0.015em; }
+.detail-title, .header-section h1 { font-family: var(--oa-font-serif); font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; }
+.doc-h2 { font-family: var(--oa-font-serif); font-size: 1.0625rem; font-weight: 500; padding-bottom: 6px; border-bottom: 1px solid var(--oa-border); }
+.doc-h3 { font-family: var(--oa-font-serif); font-weight: 500; }
+
+/* Section labels: small, spaced capitals */
+.detail-section h3, .chart-section h3, .query-note summary, .review-text summary {
+  font-family: var(--oa-font); font-size: 0.6875rem; font-weight: 600; line-height: 1rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--oa-text-secondary);
+}
+.review-text summary { color: var(--oa-accent); }
+.results-table th {
+  font-family: var(--oa-font-mono); font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--oa-text-secondary); border-bottom-color: var(--oa-border-strong);
+}
+.results-subtitle, .card-meta { color: var(--oa-text-secondary); }
+
+/* Chips and badges: flat, nearly square */
+.badge, .type-badge { border-radius: var(--oa-radius-sm); padding: 2px 8px; font-size: 0.75rem; letter-spacing: 0.01em; }
+.badge { background: var(--oa-bg-secondary); }
+.badge-metric { border-radius: var(--oa-radius); padding: 4px 10px; font-size: 0.75rem; }
+.badge-metric .metric-label {
+  font-family: var(--oa-font-mono); font-size: 0.6875rem; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.badge-bronze { background: var(--oa-chip2-bg); color: var(--oa-chip2-fg); }
+.badge-hybrid { background: var(--oa-accent-soft); color: var(--oa-accent); border-color: var(--oa-accent-soft); }
+.tag { border-radius: var(--oa-radius-xs); font-size: 0.75rem; padding: 3px 8px; margin: 3px 3px 0 0; }
+
+/* The kind-of-record marker, in the manner of ReviewSeed's small solid pill */
+.brand-cat {
+  display: inline-flex; align-items: center; height: 18px; padding: 0 8px; border-radius: 9px;
+  background: var(--oa-cat-mid); color: var(--oa-bg);
+  font-size: 0.625rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.brand-bar { border-bottom-color: var(--oa-border); }
+.brand-note { font-family: var(--oa-font-mono); font-size: 0.6875rem; letter-spacing: 0.02em; }
+
+/* Buttons: accent for the main action, outlined for the rest */
+.pagination button, .primary-button {
+  height: auto; padding: 8px 16px; border-radius: var(--oa-radius);
+  background: var(--oa-accent); border-color: var(--oa-accent); color: var(--oa-accent-on);
+  font-size: 0.78125rem; font-weight: 500; letter-spacing: 0.02em;
+}
+.pagination button:disabled { color: var(--oa-text-muted); border-color: var(--oa-border); }
+.copy-button {
+  height: auto; padding: 4px 10px; border-radius: var(--oa-radius);
+  border-color: var(--oa-border); color: var(--oa-text-strong); font-size: 0.71875rem; letter-spacing: 0.01em;
+}
+.pagination { border-top-color: var(--oa-border); }
+
+/* Charts in the view's hue */
+.hbar-track { background: var(--oa-bg-secondary); border-radius: 2px; }
+.hbar-fill { border-radius: 2px; }
+
+/* Queries sit in a near-black box, as ReviewSeed's search strings do */
+.query-note code, .query-echo {
+  background: var(--oa-query-bg); color: var(--oa-query-fg); border-color: var(--oa-query-bg);
+  border-radius: var(--oa-radius); line-height: 1.6;
+}
+.query-note code { padding: 14px 16px; }
+.query-echo { padding: 6px 10px; }
+.file-preview, .doc-code, .review-body { background: var(--oa-bg-secondary); border-color: var(--oa-border); }
+.doc code, .card-meta code { background: var(--oa-bg-secondary); }
