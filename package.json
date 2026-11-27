@@ -9,7 +9,8 @@
     "build:server": "tsc -p tsconfig.json",
     "build:ui": "tsx scripts/build-ui.ts",
     "build": "npm run typecheck:ui && npm run build:server && npm run build:ui",
-    "test": "tsx --test test/*.test.ts",
+    "test": "tsx --test test/*.test.ts test/integration/*.test.ts",
+    "test:live": "tsx --test test/live/*.test.ts",
     "start": "node dist/server/index.js",
     "dev": "concurrently --raw \"tsc -p tsconfig.json --watch\" \"tsx scripts/build-ui.ts --watch\""
   },
