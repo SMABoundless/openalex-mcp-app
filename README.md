@@ -186,15 +186,18 @@ When the daily budget is nearly used up, the text ends with a note saying how mu
 ```bash
 npm run dev          # rebuild server and views on change
 npm run build        # type-check the views, then build server and views
-npm test             # run the tests
+npm test             # unit tests and end-to-end tests; offline, a few seconds
+npm run test:live    # six tests against the real OpenAlex API; needs OPENALEX_API_KEY, costs about two cents
 ```
+
+`npm test` and `npm run build` also run on GitHub for every pull request and every push to `main`, on Node 22 and 24. Dependabot proposes dependency updates weekly; a major update of the MCP SDK or ext-apps needs a check in Claude Desktop before merging, because nothing automated exercises the sandboxed frame the views run in.
 
 Layout:
 
 - `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts`, `services/format-analysis.ts` and `services/format-query.ts` shape results, `services/references.ts` matches citations to works, `services/export.ts` writes RIS, BibTeX and CSV, `services/keywords.ts` builds keyword searches, and `services/review-text.ts` fetches review text.
 - `server/output-types.ts` — the shape of each tool's structured data. The server and the views both import it, so a renamed field fails the build.
 - `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`. `ui/shared/styles/base.css` holds the design tokens.
-- `test/` — tests for ID handling, pagination, formatting, the set summary, citation matching, keyword searches, export formats, review text and query results. They do not call the API.
+- `test/` — unit tests for the pure logic (`test/*.test.ts`); end-to-end tests in `test/integration/`, where a real MCP client calls the real server and OpenAlex is replaced by canned replies; and `test/live/`, run by hand against the real API. There are no tests of the views themselves.
 
 ## License
 
