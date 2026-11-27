@@ -37,6 +37,7 @@ Ask your assistant to search the literature, look up a paper, follow its citatio
 | `openalex_find_keywords` | Find the OpenAlex keywords that fit a topic, from key phrases or a description, with each keyword's most cited works |
 | `openalex_keyword_search` | Thorough search in parts: each part matches on its words or on chosen keywords. Reports what each piece contributes, returns a random sample, and can test the search against papers you already know are relevant |
 | `openalex_export_works` | Export works as RIS, BibTeX or CSV, from a list of IDs or a search, with duplicates removed |
+| `openalex_read_docs` | Read a page of OpenAlex's documentation (the query language, filtering, searching, grouping), whole or one section, so the model can look up syntax |
 
 All tools are read-only.
 
@@ -160,7 +161,11 @@ Requests without the right secret get a 401. `/health` stays open so the host ca
 
 ## Other services contacted
 
-Besides OpenAlex (`api.openalex.org`, and `content.openalex.org` for stored text), the server contacts three hosts, only from `openalex_get_reviews` with `include_text`, and sends them nothing but a review's DOI:
+Besides OpenAlex (`api.openalex.org`, and `content.openalex.org` for stored text), the server contacts four hosts.
+
+`openalex_read_docs` fetches documentation pages from `help.openalex.org`. It sends no key and no parameters, keeps each page in memory for a day, and stores no copy in this repository.
+
+The other three are contacted only from `openalex_get_reviews` with `include_text`, and are sent nothing but a review's DOI:
 
 - `prod--epp.elifesciences.org`, for the text of eLife reviews
 - `doi.org` and `eeb.embo.org`, for the text of Review Commons reviews
@@ -194,7 +199,7 @@ npm run test:live    # six tests against the real OpenAlex API; needs OPENALEX_A
 
 Layout:
 
-- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts`, `services/format-analysis.ts` and `services/format-query.ts` shape results, `services/references.ts` matches citations to works, `services/export.ts` writes RIS, BibTeX and CSV, `services/keywords.ts` builds keyword searches, and `services/review-text.ts` fetches review text.
+- `server/` — the MCP server. `tools/` registers the tools, `services/openalex-client.ts` talks to the API, `services/format-utils.ts`, `services/format-entities.ts`, `services/format-analysis.ts` and `services/format-query.ts` shape results, `services/references.ts` matches citations to works, `services/export.ts` writes RIS, BibTeX and CSV, `services/keywords.ts` builds keyword searches, `services/docs.ts` fetches and splits documentation pages, and `services/review-text.ts` fetches review text.
 - `server/output-types.ts` — the shape of each tool's structured data. The server and the views both import it, so a renamed field fails the build.
 - `ui/` — one Preact view per tool, each built into a single HTML file under `dist/ui/`. `ui/shared/styles/base.css` holds the design tokens.
 - `test/` — unit tests for the pure logic (`test/*.test.ts`); end-to-end tests in `test/integration/`, where a real MCP client calls the real server and OpenAlex is replaced by canned replies; and `test/live/`, run by hand against the real API. There are no tests of the views themselves.

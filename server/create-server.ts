@@ -12,6 +12,7 @@ import { registerReviewsTools } from "./tools/reviews.js";
 import { registerQueryTools } from "./tools/query.js";
 import { registerKeywordsTools } from "./tools/keywords.js";
 import { registerExportTools } from "./tools/export.js";
+import { registerDocsTools } from "./tools/docs.js";
 import { registerAllUiResources } from "./resources/ui-resources.js";
 
 /** Builds a server with every tool and view registered. Used by both transports and by the tests. */
@@ -30,6 +31,7 @@ export function createServer(): McpServer {
   registerQueryTools(server);
   registerKeywordsTools(server);
   registerExportTools(server);
+  registerDocsTools(server);
   registerAllUiResources(server);
   return server;
 }

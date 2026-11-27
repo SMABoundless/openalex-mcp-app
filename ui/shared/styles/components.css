@@ -257,3 +257,28 @@ a.badge:hover { text-decoration: none; filter: brightness(0.97); }
   background: var(--oa-bg-secondary); color: var(--oa-text);
   font-family: var(--oa-font-mono); font-size: 0.75rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere;
 }
+
+/* ---------- Documentation pages ---------- */
+.doc { max-width: 760px; font-size: 0.9375rem; line-height: 1.6; letter-spacing: -0.0067em; }
+.doc-h1 { font-size: 1.25rem; font-weight: 500; line-height: 1.75rem; margin: 20px 0 8px; }
+.doc-h2 { font-size: 1rem; font-weight: 600; line-height: 1.5rem; margin: 20px 0 6px; }
+.doc-h3 { font-size: 0.9375rem; font-weight: 600; line-height: 1.4375rem; margin: 16px 0 4px; }
+.doc-p { margin: 0 0 10px; }
+.doc-list { margin: 0 0 10px 22px; }
+.doc-list li { margin: 2px 0; }
+.doc code { padding: 1px 5px; border-radius: var(--oa-radius-xs); background: var(--oa-bg-muted); }
+.doc-code {
+  margin: 0 0 12px; padding: 10px 12px; overflow-x: auto;
+  border: 1px solid var(--oa-border); border-radius: var(--oa-radius);
+  background: var(--oa-bg-secondary); color: var(--oa-text);
+  font-family: var(--oa-font-mono); font-size: 0.8125rem; line-height: 1.6; white-space: pre;
+}
+.doc-table-wrap { overflow-x: auto; margin: 0 0 12px; }
+.doc-outline { list-style: none; margin-top: 8px; }
+.doc-outline li { padding-top: 2px; padding-bottom: 2px; }
+.link-button {
+  padding: 0; border: 0; background: none; color: var(--oa-link);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.link-button:hover:not(:disabled) { text-decoration: underline; }
+.link-button:disabled { color: var(--oa-text-muted); cursor: default; }

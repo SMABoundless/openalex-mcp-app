@@ -16,6 +16,7 @@ const CATEGORY_OF_TOOL: Record<string, { category: Category; label: string }> = 
   openalex_search_funders: { category: "funders", label: "Funders" },
   openalex_get_funder: { category: "funders", label: "Funder" },
   openalex_get_work: { category: "works", label: "Work" },
+  openalex_read_docs: { category: "topics", label: "Documentation" },
 };
 
 /** The record kind a tool's view shows; anything not listed shows works. */

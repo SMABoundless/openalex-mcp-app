@@ -3,6 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { startHarness, textOf, get, post, work, list, type Route } from "../helpers/harness.js";
+import { clearDocsCache } from "../../server/services/docs.js";
 
 async function withServer(routes: Route[], run: (h: Awaited<ReturnType<typeof startHarness>>) => Promise<void>): Promise<void> {
   const harness = await startHarness(routes);
@@ -19,8 +20,8 @@ test("the server lists every tool, each read-only and each with a view that is r
     const { tools } = await client.listTools();
     const { resources } = await client.listResources();
     const views = new Set(resources.map(r => r.uri));
-    assert.equal(tools.length, 27);
-    assert.equal(new Set(tools.map(t => t.name)).size, 27, "tool names are unique");
+    assert.equal(tools.length, 28);
+    assert.equal(new Set(tools.map(t => t.name)).size, 28, "tool names are unique");
     for (const tool of tools) {
       assert.match(tool.name, /^openalex_[a-z_]+$/);
       assert.equal(tool.annotations?.readOnlyHint, true, `${tool.name} is marked read-only`);
@@ -28,7 +29,7 @@ test("the server lists every tool, each read-only and each with a view that is r
       const view = (tool._meta as { ui?: { resourceUri?: string } } | undefined)?.ui?.resourceUri;
       assert.ok(view && views.has(view), `${tool.name} points at a registered view (${view})`);
     }
-    assert.equal(views.size, 27, "one view per tool");
+    assert.equal(views.size, 28, "one view per tool");
   });
 });
 
@@ -319,5 +320,36 @@ test("a view resource is served with the clipboard permission its copy buttons n
     const item = read.contents[0] as { text?: string; _meta?: { ui?: { permissions?: Record<string, unknown> } } };
     assert.ok((item.text ?? "").includes("<div id=\"app\">"));
     assert.deepEqual(item._meta?.ui?.permissions, { clipboardWrite: {} });
+  });
+});
+
+test("read_docs fetches a page from the help site once, returns a section, and lists headings when none matches", async () => {
+  clearDocsCache();
+  const page = "<!-- editors\' note -->\n# Search\n\nIntro.\n\n## Wildcards\n\nA star.\n\n```\n# a comment\n```\n\n## Proximity\n\nNear.\n";
+  const routes: Route[] = [{
+    name: "help page",
+    match: call => call.url.hostname === "help.openalex.org" && call.url.pathname === "/api/searching.md",
+    reply: page,
+  }];
+  await withServer(routes, async ({ client, calls }) => {
+    const whole = await client.callTool({ name: "openalex_read_docs", arguments: { topic: "searching" } });
+    const text = textOf(whole);
+    assert.match(text, /Source: https:\/\/help\.openalex\.org\/api\/searching\//);
+    assert.match(text, /## Wildcards/);
+    assert.doesNotMatch(text, /editors/);
+    const data = whole.structuredContent as { mode: string; headings: { text: string }[] };
+    assert.equal(data.mode, "page");
+    assert.deepEqual(data.headings.map(h => h.text), ["Search", "Wildcards", "Proximity"]);
+
+    const part = await client.callTool({ name: "openalex_read_docs", arguments: { topic: "searching", section: "wildcard" } });
+    assert.match(textOf(part), /## Wildcards\n\nA star\./);
+    assert.doesNotMatch(textOf(part), /Proximity/);
+
+    const none = await client.callTool({ name: "openalex_read_docs", arguments: { topic: "searching", section: "zebra" } });
+    assert.equal(none.isError, true);
+    assert.match(textOf(none), /No heading on this page contains "zebra"[\s\S]*- Wildcards/);
+
+    assert.equal(calls.length, 1, "the page is fetched once and then served from memory");
+    assert.equal(calls[0].url.search, "", "no key or other parameter is sent to the documentation site");
   });
 });
