@@ -5,12 +5,27 @@ import { OABadge } from "./OABadge";
 interface WorkCardProps {
   work: WorkOutput;
   compact?: boolean;
+  /** Whether the work is ticked for export. The checkbox shows only when onToggle is given. */
+  selected?: boolean;
+  onToggle?: () => void;
+  /** True when the selection is full, so an unticked work cannot be added */
+  selectionFull?: boolean;
 }
 
-export function WorkCard({ work, compact }: WorkCardProps) {
+export function WorkCard({ work, compact, selected, onToggle, selectionFull }: WorkCardProps) {
   const fullText = libkeyUrl(work.doi);
   return (
-    <div class="card">
+    <div class={`card${onToggle ? " card-selectable" : ""}${selected ? " card-selected" : ""}`}>
+      {onToggle && (
+        <input
+          type="checkbox"
+          class="card-check"
+          checked={Boolean(selected)}
+          disabled={!selected && selectionFull}
+          onChange={onToggle}
+          aria-label={`Select for export: ${work.title}`}
+        />
+      )}
       <div class="card-title">
         {work.doi ? (
           <a href={doiUrl(work.doi)} target="_blank" rel="noopener noreferrer">

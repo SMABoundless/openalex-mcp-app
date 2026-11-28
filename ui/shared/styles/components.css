@@ -364,3 +364,30 @@ a.badge:hover { text-decoration: none; filter: brightness(0.97); }
 .query-echo { padding: 6px 10px; }
 .file-preview, .doc-code, .review-body { background: var(--oa-bg-secondary); border-color: var(--oa-border); }
 .doc code, .card-meta code { background: var(--oa-bg-secondary); }
+
+/* ---------- Selecting works for export ---------- */
+.selection-bar { margin: 0 0 12px; padding: 8px 12px; border: 1px solid var(--oa-border); border-radius: var(--oa-radius); background: var(--oa-surface); }
+.selection-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.selection-count { font-size: 0.8125rem; font-weight: 500; color: var(--oa-text-strong); font-variant-numeric: tabular-nums; margin-right: 4px; }
+.selection-spacer { flex: 1 1 auto; }
+.selection-note { margin: 8px 0 0; font-size: 0.75rem; line-height: 1.125rem; }
+.selection-done { color: var(--oa-success-fg); }
+.selection-bar .notice { margin: 8px 0 0; }
+.export-button {
+  padding: 4px 12px; border: 1px solid var(--oa-accent); border-radius: var(--oa-radius);
+  background: var(--oa-accent); color: var(--oa-accent-on);
+  font-family: inherit; font-size: 0.71875rem; font-weight: 600; letter-spacing: 0.01em; line-height: 1rem;
+  cursor: pointer; white-space: nowrap; transition: opacity 0.12s;
+}
+.export-button:hover:not(:disabled) { opacity: 0.85; }
+.export-button:disabled, .copy-button:disabled {
+  background: var(--oa-surface); border-color: var(--oa-border); color: var(--oa-text-secondary); cursor: default;
+}
+.card-selectable { position: relative; padding-left: 44px; }
+.card-check {
+  position: absolute; left: 16px; top: 18px; width: 16px; height: 16px; margin: 0;
+  accent-color: var(--oa-accent); cursor: pointer;
+}
+.card-check:disabled { cursor: default; }
+.card-check:focus-visible, .export-button:focus-visible, .copy-button:focus-visible { outline: 2px solid var(--oa-accent); outline-offset: 2px; }
+.card-selected, .card-selected:hover { border-color: var(--oa-accent); background: var(--oa-accent-soft); }

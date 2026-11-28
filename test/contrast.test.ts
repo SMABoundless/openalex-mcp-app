@@ -76,6 +76,11 @@ const PAIRS: [string, string][] = [
   ["--oa-info-fg", "--oa-info-bg"], ["--oa-success-fg", "--oa-success-bg"], ["--oa-warning-fg", "--oa-warning-bg"], ["--oa-danger-fg", "--oa-danger-bg"],
   ["--oa-chip-fg", "--oa-chip-bg"], ["--oa-chip2-fg", "--oa-chip2-bg"],
   ["--oa-query-fg", "--oa-query-bg"],
+  // A ticked work card is tinted with the soft accent
+  ["--oa-text", "--oa-accent-soft"], ["--oa-text-strong", "--oa-accent-soft"], ["--oa-text-secondary", "--oa-accent-soft"],
+  ["--oa-title", "--oa-accent-soft"], ["--oa-link", "--oa-accent-soft"],
+  // The selection bar sits on a card surface
+  ["--oa-text-strong", "--oa-surface"], ["--oa-success-fg", "--oa-surface"],
 ];
 // Per kind of record: the label on its tint, and the page colour on the solid marker
 const CATEGORY_PAIRS: [string, string][] = [["--oa-cat-dark", "--oa-cat-light"], ["--oa-bg", "--oa-cat-mid"], ["--oa-cat-dark", "--oa-surface"]];
