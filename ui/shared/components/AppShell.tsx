@@ -17,6 +17,12 @@ export interface ShellContext {
    * refuses, the user cancels, or the host has no download support.
    */
   download: (file: { filename: string; mimeType: string; text: string }) => Promise<boolean>;
+  /**
+   * Calls another of the server's tools and gives back its data, without
+   * changing what this view shows. Undefined when the host does not let the
+   * app call tools.
+   */
+  callTool?: <R>(name: string, args: Record<string, unknown>) => Promise<{ data: R | null; error: string | null }>;
 }
 
 interface AppShellProps<T> {
@@ -93,6 +99,17 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
     }
   };
 
+  const callTool = async <R,>(name: string, toolArgs: Record<string, unknown>): Promise<{ data: R | null; error: string | null }> => {
+    try {
+      const result: ToolResultLike = await app.callServerTool({ name, arguments: toolArgs });
+      if (result.isError) return { data: null, error: resultText(result) ?? "The request failed." };
+      if (!result.structuredContent) return { data: null, error: "The server returned no data." };
+      return { data: result.structuredContent as R, error: null };
+    } catch (e) {
+      return { data: null, error: e instanceof Error ? e.message : "The request failed." };
+    }
+  };
+
   const navigate = async (changes: Record<string, unknown>) => {
     if (busy) return;
     setBusy(true);
@@ -136,7 +153,7 @@ export function AppShell<T>({ toolName, children }: AppShellProps<T>) {
           <CopyButton text={blockedLink} />
         </div>
       )}
-      {children(data, { navigate: canCallTools ? navigate : undefined, busy, download })}
+      {children(data, { navigate: canCallTools ? navigate : undefined, busy, download, callTool: canCallTools ? callTool : undefined })}
     </div>
   );
 }

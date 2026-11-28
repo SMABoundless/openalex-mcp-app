@@ -159,6 +159,17 @@ Requests without the right secret get a 401. `/health` stays open so the host ca
 - OpenAlex's machine-assigned keywords are not exported as keywords, so they are not mistaken for the authors' own.
 - The counts cover identification only. Screening and inclusion numbers for a PRISMA diagram come from the screening tool.
 
+### Choosing works in a view
+
+Every view that lists works (search results, citing works, references, related works, an author's or institution's works, and query results) has a checkbox on each card and a bar above the list:
+
+- Tick the works you want. Ticks are kept while you page, so works can be collected from several pages, up to 500.
+- `Select page` ticks everything on the page; `Clear` unticks everything.
+- `RIS`, `BibTeX` and `CSV` export the ticked works and ask the host to save the file. If the host cannot save it, the view offers the file's text to copy.
+- `Copy IDs` copies the ticked works' OpenAlex IDs, one per line.
+
+The buttons call `openalex_export_works` with the ticked IDs, so the file is the same as one asked for in conversation. In a host that does not let views call tools, the export buttons are not shown and `Copy IDs` remains.
+
 ## Other services contacted
 
 Besides OpenAlex (`api.openalex.org`, and `content.openalex.org` for stored text), the server contacts four hosts.
